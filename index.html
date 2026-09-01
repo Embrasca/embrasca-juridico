@@ -15,7 +15,12 @@
     let html = await response.text();
     const marker = '</body>';
     if (!html.includes(marker)) throw new Error('Estrutura da aplicação inválida.');
-    html = html.replace(marker, '<script src="/docx-patch.js?v=20260901"><\/script>' + marker);
+    const scripts = [
+      '<script src="/task2-core.js?v=20260901"><\\/script>',
+      '<script src="/docx-patch.js?v=20260901"><\\/script>',
+      '<script src="/task2-ui.js?v=20260901"><\\/script>'
+    ].join('');
+    html = html.replace(marker, scripts + marker);
     document.open();
     document.write(html);
     document.close();
