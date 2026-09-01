@@ -1,6 +1,41 @@
 (() => {
   const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
+  function forceDocxFileName(d) {
+    let suggestedName = 'documento';
+
+    try {
+      if (typeof fileName === 'function') {
+        suggestedName = fileName(d) || suggestedName;
+      }
+    } catch (_) {}
+
+    suggestedName = String(suggestedName).trim() || 'documento';
+    suggestedName = suggestedName.split(/[\\/]/).pop() || 'documento';
+
+    if (/\.docx$/i.test(suggestedName)) return suggestedName;
+
+    suggestedName = suggestedName.replace(/\.[^.\\/]+$/, '');
+    return `${suggestedName || 'documento'}.docx`;
+  }
+
+  function downloadDocxBytes(bytes, d) {
+    const blob = new Blob([bytes], { type: DOCX_MIME });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = forceDocxFileName(d);
+    anchor.rel = 'noopener';
+    anchor.style.display = 'none';
+
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   async function generateDocxOnServer(d) {
     const p = prof(d.templateCode);
     const templateBase64 = BUILTIN_TEMPLATES[d.templateCode];
@@ -29,7 +64,7 @@
       throw new Error('O servidor retornou um arquivo DOCX inválido.');
     }
 
-    downloadBytes(bytes, fileName(d), DOCX_MIME);
+    downloadDocxBytes(bytes, d);
   }
 
   downloadDoc = async function(d) {
