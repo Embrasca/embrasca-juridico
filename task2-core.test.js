@@ -36,3 +36,9 @@ test('valida campo conforme tipo do perfil', () => {
   assert.match(core.validateField({ name: 'E-mail', field_type: 'email', required: true }, ''), /obrigatório/);
   assert.match(core.validateField({ name: 'Percentual', placeholder: 'percentual_remuneracao', field_type: 'number', required: true }, '120'), /0 e 100/);
 });
+
+test('rejeita datas inexistentes', () => {
+  assert.equal(core.isValidDate('2026-02-28'), true);
+  assert.equal(core.isValidDate('2026-02-31'), false);
+  assert.equal(core.isValidDate('31/02/2026'), false);
+});
