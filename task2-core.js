@@ -48,6 +48,17 @@
     return Number.isFinite(n) && n >= 0 && n <= 100;
   }
 
+  function isValidDate(value) {
+    const text = String(value || '').trim();
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+    if (!match) return false;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  }
+
   function validateField(field, value) {
     const text = String(value == null ? '' : value).trim();
     if (field.required && !text) return `${field.name} é obrigatório.`;
@@ -56,9 +67,9 @@
     if (field.field_type === 'cnpj' && !isValidCNPJ(text)) return `${field.name}: CNPJ inválido.`;
     if (field.field_type === 'email' && !isValidEmail(text)) return `${field.name}: e-mail inválido.`;
     if (field.placeholder === 'percentual_remuneracao' && !isValidPercentage(text)) return `${field.name}: informe um valor entre 0 e 100.`;
-    if (field.field_type === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(text)) return `${field.name}: data inválida.`;
+    if (field.field_type === 'date' && !isValidDate(text)) return `${field.name}: data inválida.`;
     return null;
   }
 
-  return { documentType, isValidCPF, isValidCNPJ, isValidEmail, isValidPercentage, validateField };
+  return { documentType, isValidCPF, isValidCNPJ, isValidEmail, isValidPercentage, isValidDate, validateField };
 });
