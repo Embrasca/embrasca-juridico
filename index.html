@@ -4,10 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Embrasca Jurídico</title>
-  <style>html,body{margin:0;min-height:100%;background:#0b1510;color:#fff;font-family:Arial,sans-serif}.boot{padding:32px}</style>
+  <style>html,body{margin:0;min-height:100%;background:#0b1510;color:#fff;font-family:Arial,sans-serif}</style>
 </head>
 <body>
-  <div class="boot">Carregando Embrasca Jurídico...</div>
   <script>
   (async () => {
     const response = await fetch('/app.html', { cache: 'no-store' });
@@ -26,7 +25,7 @@
     document.close();
   })().catch((error) => {
     console.error('[EMBRASCA JURÍDICO]', error);
-    document.body.innerHTML = '<div class="boot">Falha ao carregar o sistema. Atualize a página.</div>';
+    document.body.innerHTML = '<div style="padding:32px">Falha ao carregar o sistema. Atualize a página.</div>';
   });
   </script>
 </body>
