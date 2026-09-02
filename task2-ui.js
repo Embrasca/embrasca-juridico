@@ -72,7 +72,6 @@
     }
     if (S.models[profile.code]) S.models[profile.code].active = true;
   });
-  save();
 
   window.__EMBRASCA_TASK2__ = true;
 })();
