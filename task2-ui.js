@@ -5,7 +5,6 @@
   const hide = (selector) => document.querySelectorAll(selector).forEach((el) => el.classList.add('hidden'));
 
   hide('#nav [data-s="dashboard"], #nav [data-s="documentos"], #nav [data-s="revisoes"], #nav [data-s="modelos"], #nav [data-s="config"]');
-  hide('#logout');
   hide('#sendReview');
 
   const navNew = document.querySelector('#nav [data-s="novo"]');
@@ -74,14 +73,6 @@
     if (S.models[profile.code]) S.models[profile.code].active = true;
   });
   save();
-
-  U = { id: 'task2-internal', name: 'Equipe Embrasca', email: '', role: 'usuario', active: true };
-  setup.classList.add('hidden');
-  login.classList.add('hidden');
-  app.classList.remove('hidden');
-  topUser.textContent = 'Uso interno - Embrasca';
-  renderAll();
-  go('novo');
 
   window.__EMBRASCA_TASK2__ = true;
 })();
