@@ -14,3 +14,7 @@ test('Task 2 nao ignora o fluxo de autenticacao da aplicacao', () => {
 test('Task 2 nao esconde a acao de logout', () => {
   assert.doesNotMatch(source, /hide\(['"]#logout['"]\)/);
 });
+
+test('Task 2 nao persiste o estado global durante a inicializacao', () => {
+  assert.doesNotMatch(source, /\bsave\s*\(\s*\)\s*;/);
+});
