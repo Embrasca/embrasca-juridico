@@ -1,4 +1,5 @@
 const { generateDocx } = require('../lib/docx-engine');
+const { config, requireUser } = require('./_supabase');
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MAX_TEMPLATE_BASE64 = 4 * 1024 * 1024;
@@ -21,7 +22,16 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { ok: false, error: 'Método não permitido.' });
   }
 
+  if (!config().configured) {
+    return json(res, 503, { ok: false, error: 'Autenticação central não configurada.' });
+  }
+
   try {
+    const user = await requireUser(req, res);
+    if (!user) {
+      return json(res, 401, { ok: false, error: 'Sessão inválida ou expirada.' });
+    }
+
     let body = req.body;
     if (Buffer.isBuffer(body)) body = JSON.parse(body.toString('utf8'));
     if (typeof body === 'string') body = JSON.parse(body);
