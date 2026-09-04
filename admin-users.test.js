@@ -6,22 +6,27 @@ const path = require('node:path');
 const read = (file) => fs.readFileSync(path.join(__dirname, file), 'utf8');
 const exists = (file) => fs.existsSync(path.join(__dirname, file));
 
-test('admin user API exists and requires admin session plus service role', () => {
+test('admin user API proxies authenticated admin requests to Supabase Edge Function', () => {
   assert.equal(exists('api/admin-users.js'), true, 'api/admin-users.js must exist');
   const source = read('api/admin-users.js');
   assert.match(source, /requireAdmin/);
-  assert.match(source, /adminConfigured/);
-  assert.match(source, /\/auth\/v1\/admin\/users/);
-  assert.match(source, /SUPABASE_SERVICE_ROLE_KEY|config\(\)\.service/);
+  assert.match(source, /functions\/v1\/admin-users/);
+  assert.match(source, /Authorization/);
+  assert.match(source, /Bearer/);
+  assert.doesNotMatch(source, /adminConfigured/);
+  assert.doesNotMatch(source, /SUPABASE_SERVICE_ROLE_KEY/);
 });
 
-test('admin API supports list create update delete and reset', () => {
-  const source = read('api/admin-users.js');
+test('Edge Function owns privileged user management and validates admin profile', () => {
+  assert.equal(exists('supabase/functions/admin-users/index.ts'), true, 'edge function must exist');
+  const source = read('supabase/functions/admin-users/index.ts');
+  assert.match(source, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(source, /\/auth\/v1\/user/);
+  assert.match(source, /role.*admin|admin.*role/s);
   assert.match(source, /action\s*===\s*['"]create['"]/);
   assert.match(source, /action\s*===\s*['"]update['"]/);
   assert.match(source, /action\s*===\s*['"]delete['"]/);
   assert.match(source, /action\s*===\s*['"]reset['"]/);
-  assert.match(source, /admin|juridico|usuario/);
 });
 
 test('last active admin cannot be removed or demoted', () => {
