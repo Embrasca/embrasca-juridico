@@ -15,12 +15,26 @@ test('primeiro administrador usa endpoint central de bootstrap', () => {
   assert.match(source, /sessionCookies/);
 });
 
+test('primeiro acesso acontece no endereco normal do sistema', () => {
+  const client = read('auth-client.js');
+  const endpoint = read('api/bootstrap.js');
+
+  assert.match(client, /request\('\/api\/bootstrap', \{ method: 'GET' \}\)/);
+  assert.doesNotMatch(client, /URLSearchParams\(window\.location\.search\).*setup/);
+  assert.doesNotMatch(client, /\?token=/);
+  assert.match(client, /bootstrapCode/);
+  assert.match(client, /Código de ativação/);
+
+  assert.match(endpoint, /bootstrap_public_status/);
+  assert.match(endpoint, /activationCode/);
+  assert.match(endpoint, /bootstrapStatus\(activationCode\)/);
+});
+
 test('setup antigo e interceptado pelo cliente central', () => {
   const client = read('auth-client.js');
   assert.match(client, /\/api\/bootstrap/);
   assert.match(client, /setupFirstAdmin/);
   assert.match(client, /forceSetup/);
-  assert.match(client, /URLSearchParams/);
   assert.match(client, /stopImmediatePropagation/);
 });
 
