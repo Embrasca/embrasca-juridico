@@ -113,7 +113,10 @@ async function refreshSession(refreshToken) {
 async function resolveSession(req, res) {
   const jar = cookies(req);
   let user = await validateAccessToken(jar[COOKIE_NAME]);
-  if (user) return user;
+  if (user) {
+    req.__embrascaAccessToken = jar[COOKIE_NAME];
+    return user;
+  }
 
   const refreshed = await refreshSession(jar[REFRESH_COOKIE_NAME]);
   if (!refreshed) {
@@ -128,6 +131,7 @@ async function resolveSession(req, res) {
     return null;
   }
 
+  req.__embrascaAccessToken = refreshed.access_token;
   if (res) {
     res.setHeader('Set-Cookie', sessionCookies(
       refreshed.access_token,
