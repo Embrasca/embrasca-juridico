@@ -63,13 +63,16 @@ async function supabaseFetch(path, { admin = false, token, method = 'GET', body 
 
 function publicUser(user) {
   if (!user) return null;
-  const meta = user.user_metadata || {};
+  const userMeta = user.user_metadata || {};
+  const appMeta = user.app_metadata || {};
+  const role = appMeta.role || userMeta.role;
+  const active = appMeta.active !== undefined ? appMeta.active : userMeta.active;
   return {
     id: user.id,
     email: String(user.email || '').toLowerCase(),
-    name: meta.name || meta.full_name || user.email || 'Usuário',
-    role: ['admin', 'juridico', 'usuario'].includes(meta.role) ? meta.role : 'usuario',
-    active: meta.active !== false,
+    name: userMeta.name || userMeta.full_name || user.email || 'Usuário',
+    role: ['admin', 'juridico', 'usuario'].includes(role) ? role : 'usuario',
+    active: active !== false,
   };
 }
 
@@ -80,17 +83,63 @@ async function listAuthUsers() {
   return list.map(publicUser);
 }
 
-async function currentUser(req) {
-  const token = cookies(req)[COOKIE_NAME];
+async function validateAccessToken(token) {
   if (!token) return null;
   const r = await supabaseFetch('/auth/v1/user', { token });
-  if (!r.ok) return null;
+  if (!r.ok || !r.data) return null;
   return publicUser(r.data);
 }
 
-async function requireAdmin(req) {
-  const user = await currentUser(req);
-  if (!user || !user.active || user.role !== 'admin') return null;
+async function refreshSession(refreshToken) {
+  if (!refreshToken) return null;
+  const r = await supabaseFetch('/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    body: { refresh_token: refreshToken },
+  });
+  if (!r.ok || !r.data?.access_token || !r.data?.user) return null;
+  return r.data;
+}
+
+async function resolveSession(req, res) {
+  const jar = cookies(req);
+  let user = await validateAccessToken(jar[COOKIE_NAME]);
+  if (user) return user.active ? user : null;
+
+  const refreshed = await refreshSession(jar[REFRESH_COOKIE_NAME]);
+  if (!refreshed) {
+    if (res) res.setHeader('Set-Cookie', clearCookies());
+    return null;
+  }
+
+  user = publicUser(refreshed.user);
+  if (!user?.active) {
+    if (res) res.setHeader('Set-Cookie', clearCookies());
+    return null;
+  }
+
+  if (res) {
+    res.setHeader('Set-Cookie', sessionCookies(
+      refreshed.access_token,
+      refreshed.refresh_token || jar[REFRESH_COOKIE_NAME],
+      refreshed.expires_in,
+    ));
+  }
+  return user;
+}
+
+async function currentUser(req, res) {
+  return resolveSession(req, res);
+}
+
+async function requireUser(req, res) {
+  const user = await resolveSession(req, res);
+  if (!user || !user.active) return null;
+  return user;
+}
+
+async function requireAdmin(req, res) {
+  const user = await requireUser(req, res);
+  if (!user || user.role !== 'admin') return null;
   return user;
 }
 
@@ -106,5 +155,7 @@ module.exports = {
   publicUser,
   listAuthUsers,
   currentUser,
+  resolveSession,
+  requireUser,
   requireAdmin,
 };
