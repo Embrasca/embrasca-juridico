@@ -10,7 +10,7 @@ function config() {
     anon,
     service,
     configured: Boolean(url && anon),
-    adminConfigured: Boolean(url && anon && service),
+    adminConfigured: Boolean(url && service),
   };
 }
 
@@ -51,6 +51,7 @@ async function supabaseFetch(path, { admin = false, token, method = 'GET', body 
     err.code = admin ? 'AUTH_ADMIN_NOT_CONFIGURED' : 'AUTH_NOT_CONFIGURED';
     throw err;
   }
+
   const key = admin ? c.service : c.anon;
   const headers = { apikey: key, 'Content-Type': 'application/json' };
   if (admin) headers.Authorization = `Bearer ${c.service}`;
@@ -67,33 +68,36 @@ async function supabaseFetch(path, { admin = false, token, method = 'GET', body 
   return { ok: response.ok, status: response.status, data };
 }
 
-function publicUser(user) {
-  if (!user) return null;
-  const userMeta = user.user_metadata || {};
-  const appMeta = user.app_metadata || {};
-  const role = appMeta.role || userMeta.role;
-  const active = appMeta.active !== undefined ? appMeta.active : userMeta.active;
-  return {
-    id: user.id,
-    email: String(user.email || '').toLowerCase(),
-    name: userMeta.name || userMeta.full_name || user.email || 'Usuário',
-    role: ['admin', 'juridico', 'usuario'].includes(role) ? role : 'usuario',
-    active: active !== false,
-  };
+async function fetchOwnProfile(token, userId) {
+  if (!token || !userId) return null;
+  const id = encodeURIComponent(userId);
+  const r = await supabaseFetch(
+    `/rest/v1/profiles?id=eq.${id}&select=id,email,name,role,active`,
+    { token },
+  );
+  if (!r.ok || !Array.isArray(r.data) || r.data.length !== 1) return null;
+  return r.data[0];
 }
 
-async function listAuthUsers() {
-  const r = await supabaseFetch('/auth/v1/admin/users?page=1&per_page=1000', { admin: true });
-  if (!r.ok) throw new Error(r.data?.message || 'Falha ao listar usuários');
-  const list = Array.isArray(r.data) ? r.data : (r.data?.users || []);
-  return list.map(publicUser);
+function publicUser(authUser, profile) {
+  if (!authUser || !profile || authUser.id !== profile.id) return null;
+  return {
+    id: authUser.id,
+    email: String(profile.email || authUser.email || '').toLowerCase(),
+    name: profile.name || profile.email || authUser.email || 'Usuário',
+    role: ['admin', 'juridico', 'usuario'].includes(profile.role) ? profile.role : 'usuario',
+    active: profile.active === true,
+  };
 }
 
 async function validateAccessToken(token) {
   if (!token) return null;
-  const r = await supabaseFetch('/auth/v1/user', { token });
-  if (!r.ok || !r.data) return null;
-  return publicUser(r.data);
+  const authResponse = await supabaseFetch('/auth/v1/user', { token });
+  if (!authResponse.ok || !authResponse.data?.id) return null;
+
+  const profile = await fetchOwnProfile(token, authResponse.data.id);
+  const user = publicUser(authResponse.data, profile);
+  return user?.active ? user : null;
 }
 
 async function refreshSession(refreshToken) {
@@ -109,7 +113,7 @@ async function refreshSession(refreshToken) {
 async function resolveSession(req, res) {
   const jar = cookies(req);
   let user = await validateAccessToken(jar[COOKIE_NAME]);
-  if (user) return user.active ? user : null;
+  if (user) return user;
 
   const refreshed = await refreshSession(jar[REFRESH_COOKIE_NAME]);
   if (!refreshed) {
@@ -117,7 +121,8 @@ async function resolveSession(req, res) {
     return null;
   }
 
-  user = publicUser(refreshed.user);
+  const profile = await fetchOwnProfile(refreshed.access_token, refreshed.user.id);
+  user = publicUser(refreshed.user, profile);
   if (!user?.active) {
     if (res) res.setHeader('Set-Cookie', clearCookies());
     return null;
@@ -158,8 +163,9 @@ module.exports = {
   sessionCookies,
   clearCookies,
   supabaseFetch,
+  fetchOwnProfile,
   publicUser,
-  listAuthUsers,
+  validateAccessToken,
   currentUser,
   resolveSession,
   requireUser,
