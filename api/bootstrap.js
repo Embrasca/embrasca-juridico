@@ -21,11 +21,24 @@ function rpcRow(data) {
   return data && typeof data === 'object' ? data : null;
 }
 
-async function bootstrapStatus(token) {
-  if (!token) return { available: false, email: '' };
+async function publicBootstrapStatus() {
+  const r = await supabaseFetch('/rest/v1/rpc/bootstrap_public_status', {
+    method: 'POST',
+    body: {},
+  });
+  if (!r.ok) return { available: false, email: '' };
+  const row = rpcRow(r.data);
+  return {
+    available: row?.available === true,
+    email: String(row?.expected_email || '').trim().toLowerCase(),
+  };
+}
+
+async function bootstrapStatus(activationCode) {
+  if (!activationCode) return { available: false, email: '' };
   const r = await supabaseFetch('/rest/v1/rpc/bootstrap_available', {
     method: 'POST',
-    body: { p_token: token },
+    body: { p_token: activationCode },
   });
   if (!r.ok) return { available: false, email: '' };
   const row = rpcRow(r.data);
@@ -49,9 +62,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'GET') {
-    const token = String(req.query?.token || '').trim();
-    const status = await bootstrapStatus(token);
-    return json(res, 200, status);
+    return json(res, 200, await publicBootstrapStatus());
   }
 
   if (req.method !== 'POST') {
@@ -59,18 +70,18 @@ module.exports = async (req, res) => {
   }
 
   const body = bodyOf(req);
-  const token = String(body.token || '').trim();
+  const activationCode = String(body.activationCode || '').trim();
   const name = String(body.name || '').trim();
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
 
-  if (name.length < 2 || !email || password.length < 8) {
-    return json(res, 400, { error: 'Informe nome, e-mail e uma senha com pelo menos 8 caracteres.' });
+  if (name.length < 2 || !email || password.length < 8 || activationCode.length < 32) {
+    return json(res, 400, { error: 'Informe nome, e-mail, senha com pelo menos 8 caracteres e o código de ativação.' });
   }
 
-  const status = await bootstrapStatus(token);
+  const status = await bootstrapStatus(activationCode);
   if (!status.available || !status.email || status.email !== email) {
-    return json(res, 403, { error: 'Este link de primeiro acesso não é válido ou já foi utilizado.' });
+    return json(res, 403, { error: 'Código de ativação inválido, já utilizado ou não autorizado para este e-mail.' });
   }
 
   let authData = null;
@@ -97,7 +108,7 @@ module.exports = async (req, res) => {
   const claim = await supabaseFetch('/rest/v1/rpc/claim_first_admin', {
     method: 'POST',
     body: {
-      p_token: token,
+      p_token: activationCode,
       p_user_id: userId,
       p_email: email,
       p_name: name,
@@ -106,7 +117,7 @@ module.exports = async (req, res) => {
 
   const claimed = claim.ok && (claim.data === true || claim.data === 'true');
   if (!claimed) {
-    return json(res, 409, { error: 'O primeiro administrador já foi definido ou o link expirou.' });
+    return json(res, 409, { error: 'O primeiro administrador já foi definido ou o código de ativação expirou.' });
   }
 
   if (!authData?.access_token) {
@@ -136,4 +147,5 @@ module.exports = async (req, res) => {
 };
 
 module.exports.bootstrap_available = bootstrapStatus;
+module.exports.bootstrap_public_status = publicBootstrapStatus;
 module.exports.claim_first_admin = true;
