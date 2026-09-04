@@ -4,7 +4,6 @@
     busy: false,
   };
 
-  const setupToken = new URLSearchParams(window.location.search).get('setup') || '';
   const byId = (id) => document.getElementById(id);
   const loginScreen = () => byId('login');
   const appScreen = () => byId('app');
@@ -19,11 +18,45 @@
     return { email, password };
   }
 
+  function ensureBootstrapCodeInput() {
+    let input = byId('bootstrapCode');
+    if (input) return input;
+
+    const root = setupScreen();
+    const button = setupButton();
+    if (!root || !button) return null;
+
+    const field = document.createElement('div');
+    field.id = 'centralBootstrapCodeField';
+    field.style.margin = '12px 0';
+
+    const label = document.createElement('label');
+    label.htmlFor = 'bootstrapCode';
+    label.textContent = 'Código de ativação';
+    label.style.display = 'block';
+    label.style.marginBottom = '6px';
+    label.style.fontWeight = '600';
+
+    input = document.createElement('input');
+    input.id = 'bootstrapCode';
+    input.name = 'bootstrapCode';
+    input.type = 'text';
+    input.autocomplete = 'one-time-code';
+    input.placeholder = 'Cole aqui o código de ativação';
+    input.style.width = '100%';
+    input.style.boxSizing = 'border-box';
+
+    field.append(label, input);
+    button.parentNode.insertBefore(field, button);
+    return input;
+  }
+
   function setupInputs() {
     return {
       name: byId('sName'),
       email: byId('sEmail'),
       password: byId('sPass'),
+      activationCode: ensureBootstrapCodeInput(),
     };
   }
 
@@ -145,12 +178,10 @@
         return data.user;
       }
 
-      if (setupToken) {
-        const bootstrap = await request(`/api/bootstrap?token=${encodeURIComponent(setupToken)}`, { method: 'GET' });
-        if (bootstrap.response.ok && bootstrap.data?.available && bootstrap.data?.email) {
-          forceSetup(bootstrap.data.email);
-          return null;
-        }
+      const bootstrap = await request('/api/bootstrap', { method: 'GET' });
+      if (bootstrap.response.ok && bootstrap.data?.available && bootstrap.data?.email) {
+        forceSetup(bootstrap.data.email);
+        return null;
       }
 
       forceLoggedOut();
@@ -164,13 +195,14 @@
 
   async function setupFirstAdmin() {
     if (api.busy) return;
-    const { name, email, password } = setupInputs();
+    const { name, email, password, activationCode } = setupInputs();
     const nameValue = String(name?.value || '').trim();
     const emailValue = String(email?.value || '').trim().toLowerCase();
     const passwordValue = String(password?.value || '');
+    const activationCodeValue = String(activationCode?.value || '').trim();
 
-    if (nameValue.length < 2 || !emailValue || passwordValue.length < 8) {
-      showSetupMessage('Preencha seu nome e use uma senha com pelo menos 8 caracteres.');
+    if (nameValue.length < 2 || !emailValue || passwordValue.length < 8 || activationCodeValue.length < 32) {
+      showSetupMessage('Preencha seu nome, use uma senha com pelo menos 8 caracteres e informe o código de ativação.');
       return;
     }
 
@@ -180,7 +212,7 @@
       const { response, data } = await request('/api/bootstrap', {
         method: 'POST',
         body: JSON.stringify({
-          token: setupToken,
+          activationCode: activationCodeValue,
           name: nameValue,
           email: emailValue,
           password: passwordValue,
@@ -193,7 +225,7 @@
       }
 
       if (password) password.value = '';
-      window.history.replaceState(null, '', window.location.pathname);
+      if (activationCode) activationCode.value = '';
 
       if (data?.user) {
         forceLoggedIn(data.user);
