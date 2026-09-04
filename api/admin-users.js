@@ -89,10 +89,11 @@ async function listUsers() {
 async function createUser(body) {
   const email = String(body.email || '').trim().toLowerCase();
   const name = String(body.name || '').trim();
-  const role = normalizeRole(body.role);
-  if (!email || name.length < 2 || !validRole(role)) {
+  const requestedRole = String(body.role || '').toLowerCase();
+  if (!email || name.length < 2 || !validRole(requestedRole)) {
     return { status: 400, body: { error: 'Informe nome, e-mail e um perfil válido.' } };
   }
+  const role = normalizeRole(requestedRole);
 
   const password = temporaryPassword();
   const created = await supabaseFetch('/auth/v1/admin/users', {
@@ -197,22 +198,25 @@ async function resetUser(body) {
   const target = await getProfile(id);
   if (!target) return { status: 404, body: { error: 'Usuário não encontrado.' } };
 
-  const r = await supabaseFetch('/auth/v1/recover', {
-    method: 'POST',
-    body: { email: target.email },
+  const password = temporaryPassword();
+  const r = await supabaseFetch(`/auth/v1/admin/users/${encodeURIComponent(id)}`, {
+    admin: true,
+    method: 'PUT',
+    body: { password },
   });
-  if (!r.ok) return { status: 502, body: { error: 'Não foi possível enviar a redefinição de acesso.' } };
-  return { status: 200, body: { ok: true } };
+  if (!r.ok) return { status: 502, body: { error: 'Não foi possível redefinir o acesso.' } };
+  return { status: 200, body: { ok: true, temporaryPassword: password, email: target.email } };
 }
 
 module.exports = async (req, res) => {
   if (!config().configured) return json(res, 503, { error: 'Autenticação central não configurada.' });
-  if (!config().adminConfigured) {
-    return json(res, 503, { error: 'Administração não configurada. Adicione SUPABASE_SERVICE_ROLE_KEY na Vercel.' });
-  }
 
   const actor = await requireAdmin(req, res);
   if (!actor) return json(res, 403, { error: 'Acesso restrito a administradores.' });
+
+  if (!config().adminConfigured) {
+    return json(res, 503, { error: 'Administração não configurada. Adicione SUPABASE_SERVICE_ROLE_KEY na Vercel.' });
+  }
 
   try {
     if (req.method === 'GET') {
