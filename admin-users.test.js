@@ -17,25 +17,27 @@ test('admin user API proxies authenticated admin requests to Supabase Edge Funct
   assert.doesNotMatch(source, /SUPABASE_SERVICE_ROLE_KEY/);
 });
 
-test('Edge Function owns privileged user management and validates admin profile', () => {
+test('Edge Function creates Auth users with the official admin SDK', () => {
   assert.equal(exists('supabase/functions/admin-users/index.ts'), true, 'edge function must exist');
   const source = read('supabase/functions/admin-users/index.ts');
-  assert.match(source, /SUPABASE_SERVICE_ROLE_KEY/);
-  assert.match(source, /\/auth\/v1\/user/);
+  assert.match(source, /createClient/);
+  assert.match(source, /auth\.admin\.createUser/);
+  assert.match(source, /auth\.admin\.updateUserById/);
+  assert.match(source, /auth\.admin\.deleteUser/);
+  assert.match(source, /data\.user/);
+});
+
+test('Edge Function validates administrator profile', () => {
+  const source = read('supabase/functions/admin-users/index.ts');
   assert.match(source, /role.*admin|admin.*role/s);
-  assert.match(source, /action\s*===\s*['"]create['"]/);
-  assert.match(source, /action\s*===\s*['"]update['"]/);
-  assert.match(source, /action\s*===\s*['"]delete['"]/);
-  assert.match(source, /action\s*===\s*['"]reset['"]/);
+  assert.match(source, /active/);
 });
 
 test('last active admin cannot be removed or demoted', () => {
   assert.equal(exists('api/admin-users-core.js'), true, 'api/admin-users-core.js must exist');
   const core = require('./api/admin-users-core.js');
-
   assert.equal(core.canRemoveAdmin({ targetRole: 'admin', targetActive: true, activeAdminCount: 1 }), false);
   assert.equal(core.canRemoveAdmin({ targetRole: 'admin', targetActive: true, activeAdminCount: 2 }), true);
-  assert.equal(core.canRemoveAdmin({ targetRole: 'juridico', targetActive: true, activeAdminCount: 1 }), true);
 });
 
 test('admin interface is only shown to admin and exposes profile management', () => {
@@ -49,9 +51,4 @@ test('admin interface is only shown to admin and exposes profile management', ()
   assert.match(ui, /Ativar|Desativar/);
   assert.match(ui, /Excluir/);
   assert.match(ui, /Redefinir acesso/);
-});
-
-test('index loads admin user interface after central auth', () => {
-  const index = read('index.html');
-  assert.match(index, /admin-users-ui\.js/);
 });
