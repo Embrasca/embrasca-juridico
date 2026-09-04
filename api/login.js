@@ -1,4 +1,11 @@
-const { config, json, sessionCookies, supabaseFetch, publicUser } = require('./_supabase');
+const {
+  config,
+  json,
+  sessionCookies,
+  supabaseFetch,
+  fetchOwnProfile,
+  publicUser,
+} = require('./_supabase');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método não permitido.' });
@@ -17,8 +24,11 @@ module.exports = async (req, res) => {
     return json(res, 401, { error: 'E-mail ou senha inválidos.' });
   }
 
-  const user = publicUser(r.data.user);
-  if (!user.active) return json(res, 403, { error: 'Usuário desativado.' });
+  const profile = await fetchOwnProfile(r.data.access_token, r.data.user.id);
+  const user = publicUser(r.data.user, profile);
+  if (!user || !user.active) {
+    return json(res, 403, { error: 'Usuário desativado ou sem perfil de acesso.' });
+  }
 
   res.setHeader('Set-Cookie', sessionCookies(r.data.access_token, r.data.refresh_token, r.data.expires_in));
   return json(res, 200, { user });
