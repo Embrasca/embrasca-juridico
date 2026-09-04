@@ -5,7 +5,13 @@ function config() {
   const url = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
   const anon = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || '';
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return { url, anon, service, configured: Boolean(url && anon && service) };
+  return {
+    url,
+    anon,
+    service,
+    configured: Boolean(url && anon),
+    adminConfigured: Boolean(url && anon && service),
+  };
 }
 
 function json(res, status, body, headers = {}) {
@@ -40,9 +46,9 @@ function clearCookies() {
 
 async function supabaseFetch(path, { admin = false, token, method = 'GET', body } = {}) {
   const c = config();
-  if (!c.configured) {
-    const err = new Error('AUTH_NOT_CONFIGURED');
-    err.code = 'AUTH_NOT_CONFIGURED';
+  if (!c.configured || (admin && !c.adminConfigured)) {
+    const err = new Error(admin ? 'AUTH_ADMIN_NOT_CONFIGURED' : 'AUTH_NOT_CONFIGURED');
+    err.code = admin ? 'AUTH_ADMIN_NOT_CONFIGURED' : 'AUTH_NOT_CONFIGURED';
     throw err;
   }
   const key = admin ? c.service : c.anon;
