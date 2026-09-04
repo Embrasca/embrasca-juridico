@@ -49,6 +49,10 @@
     } catch (_) {}
   }
 
+  function releaseAuthGate() {
+    document.getElementById('central-auth-gate')?.remove();
+  }
+
   function forceLoggedOut(message = '') {
     setGlobalUser(null);
     const setup = setupScreen();
@@ -62,6 +66,7 @@
 
   function forceLoggedIn(user) {
     setGlobalUser(user);
+    releaseAuthGate();
     const setup = setupScreen();
     const login = loginScreen();
     const app = appScreen();
@@ -152,6 +157,7 @@
       forceLoggedOut();
       const { password } = loginInputs();
       if (password) password.value = '';
+      window.location.reload();
     }
   }
 
