@@ -14,6 +14,10 @@
     let html = await response.text();
     const marker = '</body>';
     if (!html.includes(marker)) throw new Error('Estrutura da aplicação inválida.');
+
+    const authGate = '<style id="central-auth-gate">#app,#setup{display:none!important}</style>';
+    html = html.replace('</head>', authGate + '</head>');
+
     const scripts = [
       '<script src="/auth-client.js?v=20260904"><\/script>',
       '<script src="/task2-core.js?v=20260901"><\/script>',
