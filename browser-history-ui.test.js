@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const test = require('node:test');
 const {
   STATE_KEY,
@@ -83,4 +84,9 @@ test('nao cria historico duplicado para a mesma pagina', () => {
 
   manager.recordView('Documentos');
   assert.equal(pushes, 0);
+});
+
+test('carregador injeta o controlador de historico do navegador', () => {
+  const source = fs.readFileSync(__dirname + '/index.html', 'utf8');
+  assert.match(source, /browser-history-ui\.js/);
 });
