@@ -2,6 +2,9 @@
   "use strict";
 
   const STATE_KEY = "embrascaJuridicoView";
+  const GUARD_KEY = "embrascaJuridicoHistoryGuard";
+  const GUARD_ROOT = "root";
+  const GUARD_ACTIVE = "active";
   const DEFAULT_VIEW = "Dashboard";
   const NAV_ITEMS = [
     "Dashboard",
@@ -41,9 +44,19 @@
     return canonicalView(state[STATE_KEY]);
   }
 
-  function withViewState(state, view) {
+  function stateGuard(state) {
+    if (!state || typeof state !== "object") return null;
+    const guard = state[GUARD_KEY];
+    return guard === GUARD_ROOT || guard === GUARD_ACTIVE ? guard : null;
+  }
+
+  function withHistoryState(state, view, guard) {
     const base = state && typeof state === "object" ? state : {};
-    return { ...base, [STATE_KEY]: view };
+    return {
+      ...base,
+      [STATE_KEY]: view,
+      [GUARD_KEY]: guard,
+    };
   }
 
   function createHistoryManager({ history, location, restoreView }) {
@@ -52,12 +65,29 @@
     }
 
     function ensureInitialState(initialView = DEFAULT_VIEW) {
-      const current = stateView(history.state);
-      if (current) return current;
-
       const view = canonicalView(initialView) || DEFAULT_VIEW;
+      const guard = stateGuard(history.state);
+
+      if (guard === GUARD_ACTIVE) {
+        return stateView(history.state) || view;
+      }
+
+      if (guard === GUARD_ROOT) {
+        history.pushState(
+          withHistoryState(history.state, view, GUARD_ACTIVE),
+          "",
+          location.href,
+        );
+        return view;
+      }
+
       history.replaceState(
-        withViewState(history.state, view),
+        withHistoryState(history.state, DEFAULT_VIEW, GUARD_ROOT),
+        "",
+        location.href,
+      );
+      history.pushState(
+        withHistoryState(history.state, view, GUARD_ACTIVE),
         "",
         location.href,
       );
@@ -68,20 +98,46 @@
       const view = canonicalView(viewName);
       if (!view) return false;
 
-      if (stateView(history.state) === view) return false;
+      if (
+        stateGuard(history.state) === GUARD_ACTIVE &&
+        stateView(history.state) === view
+      ) {
+        return false;
+      }
 
       history.pushState(
-        withViewState(history.state, view),
+        withHistoryState(history.state, view, GUARD_ACTIVE),
         "",
         location.href,
       );
       return true;
     }
 
+    function protectRoot(state) {
+      restoreView(DEFAULT_VIEW);
+      history.pushState(
+        withHistoryState(state, DEFAULT_VIEW, GUARD_ACTIVE),
+        "",
+        location.href,
+      );
+    }
+
     function handlePopState(event) {
-      const view = stateView(event && event.state);
-      if (!view) return false;
-      restoreView(view);
+      const state = event && event.state;
+      const guard = stateGuard(state);
+
+      if (guard === GUARD_ROOT) {
+        protectRoot(state);
+        return true;
+      }
+
+      if (guard === GUARD_ACTIVE) {
+        restoreView(stateView(state) || DEFAULT_VIEW);
+        return true;
+      }
+
+      // Fallback defensivo para estados antigos ou incompletos da própria aba.
+      protectRoot(history.state);
       return true;
     }
 
@@ -213,6 +269,9 @@
 
   const api = {
     STATE_KEY,
+    GUARD_KEY,
+    GUARD_ROOT,
+    GUARD_ACTIVE,
     DEFAULT_VIEW,
     NAV_ITEMS,
     normalizeText,
