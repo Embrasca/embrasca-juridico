@@ -52,3 +52,16 @@ test('admin interface is only shown to admin and exposes profile management', ()
   assert.match(ui, /Excluir/);
   assert.match(ui, /Redefinir acesso/);
 });
+
+test('admin creates a central Auth user with the password defined in the panel', () => {
+  const ui = read('admin-users-ui.js');
+  const edge = read('supabase/functions/admin-users/index.ts');
+  assert.match(ui, /admCreatePassword/);
+  assert.match(ui, /type=["']password["']/);
+  assert.match(ui, /action:\s*['"]create['"][^}]*password/s);
+  assert.match(edge, /const password\s*=\s*String\(body\.password/);
+  assert.match(edge, /password\.length\s*<\s*8/);
+  assert.match(edge, /auth\.admin\.createUser\(\{[\s\S]*password,/);
+  const createBlock = edge.slice(edge.indexOf('async function createUser'), edge.indexOf('async function updateUser'));
+  assert.doesNotMatch(createBlock, /temporaryPassword\(\)/);
+});
