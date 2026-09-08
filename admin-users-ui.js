@@ -54,7 +54,7 @@
       #${OVERLAY_ID}{position:fixed;inset:0;z-index:99999;background:rgba(5,12,8,.82);display:none;align-items:flex-start;justify-content:center;padding:40px 18px;overflow:auto;font-family:Arial,sans-serif}
       #${OVERLAY_ID}.open{display:flex}.adm-panel{width:min(1120px,100%);background:#f7f9f7;color:#142018;border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.42);overflow:hidden}
       .adm-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:#163e28;color:#fff}.adm-head h2{margin:0;font-size:22px}.adm-close{border:0;background:transparent;color:#fff;font-size:28px;cursor:pointer}
-      .adm-body{padding:22px}.adm-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:end}.adm-field label{display:block;font-size:12px;font-weight:700;margin:0 0 5px}
+      .adm-body{padding:22px}.adm-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:end}.adm-field label{display:block;font-size:12px;font-weight:700;margin:0 0 5px}
       .adm-field input,.adm-field select,.adm-table input,.adm-table select{width:100%;box-sizing:border-box;padding:9px;border:1px solid #bcc9c0;border-radius:8px;background:#fff;color:#142018}
       .adm-btn{border:0;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer;background:#1c633a;color:#fff}.adm-btn.secondary{background:#dde6df;color:#142018}.adm-btn.danger{background:#8a2525}
       .adm-msg{display:none;margin:0 0 16px;padding:11px 13px;border:1px solid;border-radius:8px;color:#fff}.adm-temp{margin:14px 0;padding:12px;border:1px dashed #6f8a77;border-radius:8px;background:#eef4ef;word-break:break-all}
@@ -77,6 +77,7 @@
           <div class="adm-grid">
             <div class="adm-field"><label for="admCreateName">Nome</label><input id="admCreateName" autocomplete="off"></div>
             <div class="adm-field"><label for="admCreateEmail">E-mail</label><input id="admCreateEmail" type="email" autocomplete="off"></div>
+            <div class="adm-field"><label for="admCreatePassword">Senha inicial</label><input id="admCreatePassword" type="password" autocomplete="new-password" minlength="8"></div>
             <div class="adm-field"><label for="admCreateRole">Perfil</label><select id="admCreateRole"><option value="usuario">Usuário</option><option value="juridico">Jurídico</option><option value="admin">Administrador</option></select></div>
             <button type="button" class="adm-btn" id="admCreateBtn">Criar usuário</button>
           </div>
@@ -173,14 +174,14 @@
   async function createUser() {
     const name = byId('admCreateName')?.value.trim() || '';
     const email = byId('admCreateEmail')?.value.trim().toLowerCase() || '';
+    const password = byId('admCreatePassword')?.value || '';
     const role = byId('admCreateRole')?.value || 'usuario';
-    if (name.length < 2 || !email) return showMessage('Informe nome e e-mail.', true);
+    if (name.length < 2 || !email || password.length < 8) return showMessage('Informe nome, e-mail e uma senha com pelo menos 8 caracteres.', true);
     showMessage('Criando usuário...');
-    const { response, data } = await request('POST', { action: 'create', name, email, role });
+    const { response, data } = await request('POST', { action: 'create', name, email, password, role });
     if (!response.ok) return showMessage(data?.error || 'Não foi possível criar o usuário.', true);
-    showTemporaryPassword(email, data?.temporaryPassword);
-    byId('admCreateName').value = ''; byId('admCreateEmail').value = '';
-    showMessage('Usuário criado.');
+    byId('admCreateName').value = ''; byId('admCreateEmail').value = ''; byId('admCreatePassword').value = '';
+    showMessage('Usuário criado. Ele já pode entrar com o e-mail e a senha definidos.');
     await loadUsers();
   }
 
