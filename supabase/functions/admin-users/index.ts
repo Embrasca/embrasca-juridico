@@ -106,12 +106,12 @@ async function listUsers() {
 async function createUser(body: any) {
   const email = String(body.email || '').trim().toLowerCase();
   const name = String(body.name || '').trim();
-  if (!email || name.length < 2 || !validRole(body.role)) {
-    return json(400, { error: 'Informe nome, e-mail e um perfil válido.' });
+  const password = String(body.password || '');
+  if (!email || name.length < 2 || password.length < 8 || !validRole(body.role)) {
+    return json(400, { error: 'Informe nome, e-mail, senha com pelo menos 8 caracteres e um perfil válido.' });
   }
 
   const role = normalizeRole(body.role);
-  const password = temporaryPassword();
   const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
@@ -146,7 +146,6 @@ async function createUser(body: any) {
       active: true,
       created_at: createdUser.created_at || null,
     }),
-    temporaryPassword: password,
   });
 }
 
