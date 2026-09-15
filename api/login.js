@@ -6,6 +6,7 @@ const {
   fetchOwnProfile,
   publicUser,
 } = require('./_supabase');
+const { AUTH_UNAVAILABLE_MESSAGE, classifyLoginFailure } = require('./login-error');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método não permitido.' });
@@ -15,13 +16,20 @@ module.exports = async (req, res) => {
   const password = String(req.body?.password || '');
   if (!email || !password) return json(res, 400, { error: 'Informe e-mail e senha.' });
 
-  const r = await supabaseFetch('/auth/v1/token?grant_type=password', {
-    method: 'POST',
-    body: { email, password },
-  });
+  let r;
+  try {
+    r = await supabaseFetch('/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      body: { email, password },
+    });
+  } catch (error) {
+    console.error('[LOGIN SUPABASE]', error);
+    return json(res, 503, { error: AUTH_UNAVAILABLE_MESSAGE });
+  }
 
   if (!r.ok || !r.data?.access_token || !r.data?.user) {
-    return json(res, 401, { error: 'E-mail ou senha inválidos.' });
+    const failure = classifyLoginFailure(r);
+    return json(res, failure.status, { error: failure.error });
   }
 
   const profile = await fetchOwnProfile(r.data.access_token, r.data.user.id);
