@@ -45,6 +45,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        templateCode: d.templateCode,
         templateBase64,
         replacements: valuesForDoc(p, d.values, d.version, d.status)
       })
