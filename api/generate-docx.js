@@ -1,4 +1,5 @@
 const { generateDocx } = require('../lib/docx-engine');
+const { cleanGeneratedDocx } = require('../lib/docx-cleanup');
 const { config, requireUser } = require('./_supabase');
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -56,17 +57,18 @@ module.exports = async function handler(req, res) {
     }
 
     const result = generateDocx(template, replacements);
-    if (result.buffer.length > 10 * 1024 * 1024) {
+    const cleanBuffer = cleanGeneratedDocx(result.buffer);
+    if (cleanBuffer.length > 10 * 1024 * 1024) {
       throw new Error('DOCX gerado acima do limite permitido.');
     }
 
     res.statusCode = 200;
     res.setHeader('Content-Type', DOCX_MIME);
     res.setHeader('Content-Disposition', 'attachment; filename="documento.docx"');
-    res.setHeader('Content-Length', String(result.buffer.length));
+    res.setHeader('Content-Length', String(cleanBuffer.length));
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.end(result.buffer);
+    res.end(cleanBuffer);
   } catch (error) {
     console.error('[DOCX]', error);
     return json(res, 500, { ok: false, error: error?.message || 'Falha ao gerar o documento.' });
