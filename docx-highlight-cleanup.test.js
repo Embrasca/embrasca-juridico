@@ -20,7 +20,9 @@ test('remove marca-texto e sombreado de texto sem remover fundo de celula', () =
 
   const cleaned = stripTextMarkingFromXml(xml);
   assert.doesNotMatch(cleaned, /<w:highlight\b/);
-  assert.doesNotMatch(cleaned, /<w:rPr>[\s\S]*?<w:shd\b/);
+  for (const rPr of cleaned.match(/<w:rPr\b[^>]*>[\s\S]*?<\/w:rPr>/g) || []) {
+    assert.doesNotMatch(rPr, /<w:shd\b/);
+  }
   assert.match(cleaned, /<w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="D9EAD3"\/><\/w:tcPr>/);
   assert.match(cleaned, /<w:b\/>/);
 });
