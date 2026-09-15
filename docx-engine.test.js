@@ -1,11 +1,34 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { buildZip, readZip, generateDocx, repairWordXml } = require('./lib/docx-engine');
+const { cleanGeneratedDocx } = require('./lib/docx-cleanup');
 
 function minimalTemplate(documentXml) {
   return buildZip([
     { name: '[Content_Types].xml', data: Buffer.from('<Types/>', 'utf8') },
     { name: 'word/document.xml', data: Buffer.from(documentXml, 'utf8') }
+  ]);
+}
+
+function brandedTemplateWithRubrica() {
+  const documentXml = [
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>',
+    '<w:p><w:r><w:t>Documento jurídico corporativo</w:t></w:r></w:p>',
+    '<w:p><w:r><w:drawing><a:blip xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" r:embed="rIdEmbrascaCoverLogo"/></w:drawing></w:r></w:p>',
+    '<w:p><w:pPr><w:pageBreakBefore/></w:pPr></w:p>',
+    '<w:p><w:r><w:t>{{name}}</w:t></w:r></w:p>',
+    '<w:sectPr><w:headerReference w:type="default" r:id="rIdEmbrascaHeader"/><w:footerReference w:type="default" r:id="rIdEmbrascaFooter"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>',
+    '</w:body></w:document>'
+  ].join('');
+  const relsXml = '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdEmbrascaCoverLogo" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/embrasca-logo.png"/><Relationship Id="rIdEmbrascaHeader" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/><Relationship Id="rIdEmbrascaFooter" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/></Relationships>';
+  const footerXml = '<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:r><w:rPr><w:highlight w:val="yellow"/></w:rPr><w:t>Embrasca Soluções Sustentáveis — RUBRICA ORIGINAL</w:t></w:r></w:p></w:ftr>';
+  return buildZip([
+    { name: '[Content_Types].xml', data: Buffer.from('<Types/>') },
+    { name: 'word/document.xml', data: Buffer.from(documentXml) },
+    { name: 'word/_rels/document.xml.rels', data: Buffer.from(relsXml) },
+    { name: 'word/header1.xml', data: Buffer.from('<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:r><w:t>Embrasca Soluções Sustentáveis</w:t></w:r></w:p></w:hdr>') },
+    { name: 'word/footer1.xml', data: Buffer.from(footerXml) },
+    { name: 'word/media/embrasca-logo.png', data: Buffer.from([1, 2, 3]) }
   ]);
 }
 
@@ -83,4 +106,44 @@ test('generateDocx removes Embrasca corporate branding while preserving legal co
   assert.equal(names.has('word/media/embrasca-logo.png'), false);
   assert.match(combined, /Cliente Teste/);
   assert.match(combined, /w:sz w:val="22"/);
+});
+
+test('preserves the original footer/rubrica only for the service contract model', () => {
+  const template = brandedTemplateWithRubrica();
+  const result = generateDocx(template, { name: 'Cliente Teste' }, { templateCode: 'MINUTA_PRESTACAO_SERVICOS' });
+  const entries = readZip(result.buffer);
+  const footer = entries.find((entry) => entry.name === 'word/footer1.xml').data.toString('utf8');
+  const documentXml = entries.find((entry) => entry.name === 'word/document.xml').data.toString('utf8');
+  const rels = entries.find((entry) => entry.name === 'word/_rels/document.xml.rels').data.toString('utf8');
+
+  assert.match(footer, /RUBRICA ORIGINAL/);
+  assert.match(footer, /w:highlight w:val="yellow"/);
+  assert.match(documentXml, /rIdEmbrascaFooter/);
+  assert.match(rels, /rIdEmbrascaFooter/);
+});
+
+test('does not preserve the rubrica for the other legal document models', () => {
+  const template = brandedTemplateWithRubrica();
+  const result = generateDocx(template, { name: 'Cliente Teste' }, { templateCode: 'NDA_BR' });
+  const entries = readZip(result.buffer);
+  const footer = entries.find((entry) => entry.name === 'word/footer1.xml').data.toString('utf8');
+  const documentXml = entries.find((entry) => entry.name === 'word/document.xml').data.toString('utf8');
+
+  assert.equal(footer.includes('RUBRICA ORIGINAL'), false);
+  assert.equal(documentXml.includes('rIdEmbrascaFooter'), false);
+});
+
+test('cleanup keeps the service-contract footer byte-for-byte while cleaning body formatting', () => {
+  const template = brandedTemplateWithRubrica();
+  const generated = generateDocx(template, { name: 'Cliente Teste' }, { templateCode: 'MINUTA_PRESTACAO_SERVICOS' });
+  const beforeEntries = readZip(generated.buffer);
+  const footerBefore = beforeEntries.find((entry) => entry.name === 'word/footer1.xml').data.toString('utf8');
+
+  const cleaned = cleanGeneratedDocx(generated.buffer, { templateCode: 'MINUTA_PRESTACAO_SERVICOS' });
+  const afterEntries = readZip(cleaned);
+  const footerAfter = afterEntries.find((entry) => entry.name === 'word/footer1.xml').data.toString('utf8');
+
+  assert.equal(footerAfter, footerBefore);
+  assert.match(footerAfter, /RUBRICA ORIGINAL/);
+  assert.match(footerAfter, /w:highlight w:val="yellow"/);
 });
