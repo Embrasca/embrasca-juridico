@@ -5,6 +5,14 @@ const { config, requireUser } = require('./_supabase');
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MAX_TEMPLATE_BASE64 = 4 * 1024 * 1024;
 const MAX_REPLACEMENTS = 150;
+const ALLOWED_TEMPLATE_CODES = new Set([
+  'MINUTA_AD_EXITUM',
+  'MINUTA_PRESTACAO_SERVICOS',
+  'MOU_BR',
+  'NDA_BR',
+  'NDA_EN',
+  'NDA_US_FRANCO',
+]);
 
 function json(res, status, body) {
   res.statusCode = status;
@@ -38,9 +46,13 @@ module.exports = async function handler(req, res) {
     if (typeof body === 'string') body = JSON.parse(body);
     if (!body || typeof body !== 'object') throw new Error('Requisição inválida.');
 
+    const templateCode = String(body.templateCode || '');
     const templateBase64 = String(body.templateBase64 || '');
     const replacements = body.replacements;
 
+    if (!ALLOWED_TEMPLATE_CODES.has(templateCode)) {
+      return json(res, 400, { ok: false, error: 'Modelo jurídico inválido.' });
+    }
     if (!templateBase64 || templateBase64.length > MAX_TEMPLATE_BASE64) {
       return json(res, 400, { ok: false, error: 'Modelo DOCX ausente ou acima do limite permitido.' });
     }
@@ -56,8 +68,8 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { ok: false, error: 'Modelo DOCX interno inválido.' });
     }
 
-    const result = generateDocx(template, replacements);
-    const cleanBuffer = cleanGeneratedDocx(result.buffer);
+    const result = generateDocx(template, replacements, { templateCode });
+    const cleanBuffer = cleanGeneratedDocx(result.buffer, { templateCode });
     if (cleanBuffer.length > 10 * 1024 * 1024) {
       throw new Error('DOCX gerado acima do limite permitido.');
     }
