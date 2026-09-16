@@ -38,6 +38,24 @@
     panel.style.margin = '0 auto';
   }
 
+  function centralMount(panel, id) {
+    let mount = panel.querySelector(`#${id}`);
+    if (!mount) {
+      mount = document.createElement('div');
+      mount.id = id;
+      mount.dataset.centralLegalWorkspace = 'true';
+      panel.appendChild(mount);
+    }
+    mount.innerHTML = '';
+    mount.hidden = false;
+    return mount;
+  }
+
+  function clearCentralDetail(panel) {
+    const detail = panel?.querySelector?.('#centralLegalDetail');
+    if (detail) detail.remove();
+  }
+
   function button(text, onClick, kind = 'secondary') {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -89,15 +107,17 @@
   function renderDocuments() {
     const panel = element('documentos');
     if (!panel) return;
-    panel.innerHTML = '';
-    stylePanel(panel);
-    addText(panel, 'h1', 'Documentos');
-    addText(panel, 'p', 'Documentos jurídicos centralizados e responsáveis da versão atual.', 'sub');
 
+    clearCentralDetail(panel);
+    const mount = centralMount(panel, 'centralLegalDocuments');
     if (!state.documents.length) {
-      addText(panel, 'p', 'Nenhum documento gerado ainda.');
+      mount.remove();
       return;
     }
+
+    mount.style.marginTop = '20px';
+    addText(mount, 'h2', 'Documentos centralizados');
+    addText(mount, 'p', 'Responsáveis da versão atual dos documentos gerados a partir da centralização.', 'sub');
 
     state.documents.forEach((doc) => {
       const card = document.createElement('div');
@@ -116,26 +136,28 @@
       actions.appendChild(button('Ver detalhes', () => open(doc.id), 'primary'));
       actions.appendChild(button('Baixar', () => downloadVersion(doc.id, doc.currentVersion)));
       card.appendChild(actions);
-      panel.appendChild(card);
+      mount.appendChild(card);
     });
   }
 
   function renderReviews() {
     const panel = element('revisoes');
     if (!panel) return;
-    panel.innerHTML = '';
-    stylePanel(panel);
-    addText(panel, 'h1', 'Revisões');
-    addText(panel, 'p', core.canReview(user()) ? 'Fila jurídica de revisão e aprovação.' : 'Acompanhe o andamento das revisões dos seus documentos.', 'sub');
 
+    clearCentralDetail(panel);
+    const mount = centralMount(panel, 'centralLegalReviews');
     const docs = core.canReview(user())
       ? state.documents.filter((d) => ['under_review', 'correction_requested', 'approved'].includes(d.status))
       : state.documents;
 
     if (!docs.length) {
-      addText(panel, 'p', 'Nenhuma revisão disponível.');
+      mount.remove();
       return;
     }
+
+    mount.style.marginTop = '20px';
+    addText(mount, 'h2', 'Revisões centralizadas');
+    addText(mount, 'p', core.canReview(user()) ? 'Fila jurídica de revisão e aprovação.' : 'Acompanhe o andamento das revisões dos documentos centralizados.', 'sub');
 
     docs.forEach((doc) => {
       const card = document.createElement('div');
@@ -147,7 +169,7 @@
       addText(card, 'div', `v${doc.currentVersion} • ${core.statusLabel(doc.status)}`);
       responsibilityRows(card, doc);
       card.appendChild(button('Abrir revisão', () => open(doc.id), 'primary'));
-      panel.appendChild(card);
+      mount.appendChild(card);
     });
   }
 
@@ -170,18 +192,33 @@
   function renderDetail(doc) {
     const target = activeDetailTarget();
     if (!target) return;
-    target.innerHTML = '';
-    stylePanel(target);
-    addText(target, 'h1', doc.title || doc.templateCode || 'Documento');
-    addText(target, 'p', `${doc.counterparty || 'Sem contraparte'} • v${doc.currentVersion} • ${core.statusLabel(doc.status)}`, 'sub');
-    responsibilityRows(target, doc);
+
+    const listMount = target.querySelector(target.id === 'documentos' ? '#centralLegalDocuments' : '#centralLegalReviews');
+    if (listMount) listMount.hidden = true;
+
+    const mount = centralMount(target, 'centralLegalDetail');
+    mount.style.marginTop = '20px';
+    mount.style.padding = '18px';
+    mount.style.border = '1px solid rgba(127,127,127,.25)';
+    mount.style.borderRadius = '12px';
+
+    const back = button('Voltar', async () => {
+      mount.remove();
+      if (listMount) listMount.hidden = false;
+      await refresh();
+    });
+    mount.appendChild(back);
+
+    addText(mount, 'h2', doc.title || doc.templateCode || 'Documento');
+    addText(mount, 'p', `${doc.counterparty || 'Sem contraparte'} • v${doc.currentVersion} • ${core.statusLabel(doc.status)}`, 'sub');
+    responsibilityRows(mount, doc);
 
     const times = document.createElement('div');
     times.style.margin = '14px 0';
     addText(times, 'div', `Gerado em: ${core.formatDateTime(doc.generatedAt)}`);
     addText(times, 'div', `Revisado em: ${core.formatDateTime(doc.reviewedAt)}`);
     addText(times, 'div', `Aprovado em: ${core.formatDateTime(doc.approvedAt)}`);
-    target.appendChild(times);
+    mount.appendChild(times);
 
     const actions = document.createElement('div');
     actions.style.display = 'flex';
@@ -210,20 +247,20 @@
         await open(doc.id);
       }, 'primary'));
     }
-    target.appendChild(actions);
+    mount.appendChild(actions);
 
-    addText(target, 'h2', 'Histórico de versões');
+    addText(mount, 'h3', 'Histórico de versões');
     (doc.versions || []).forEach((version) => {
       const row = document.createElement('div');
       row.style.padding = '8px 0';
       row.style.borderBottom = '1px solid rgba(127,127,127,.15)';
       addText(row, 'div', `v${version.version} • Gerado por ${version.generatedBy?.name || '—'} • ${core.formatDateTime(version.generatedAt)}`);
       row.appendChild(button('Baixar', () => downloadVersion(doc.id, version.version)));
-      target.appendChild(row);
+      mount.appendChild(row);
     });
 
-    addText(target, 'h2', 'Histórico de revisão');
-    if (!(doc.reviews || []).length) addText(target, 'p', 'Sem ações de revisão nesta versão/documento.');
+    addText(mount, 'h3', 'Histórico de revisão');
+    if (!(doc.reviews || []).length) addText(mount, 'p', 'Sem ações de revisão nesta versão/documento.');
     (doc.reviews || []).forEach((review) => {
       const actionLabel = review.action === 'approved' ? 'Aprovado' : 'Correção solicitada';
       const row = document.createElement('div');
@@ -231,7 +268,7 @@
       row.style.borderBottom = '1px solid rgba(127,127,127,.15)';
       addText(row, 'div', `${actionLabel} • v${review.version} • ${review.reviewedBy?.name || '—'} • ${core.formatDateTime(review.createdAt)}`);
       if (review.comment) addText(row, 'div', review.comment);
-      target.appendChild(row);
+      mount.appendChild(row);
     });
   }
 
