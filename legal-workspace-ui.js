@@ -43,7 +43,13 @@
     btn.type = 'button';
     btn.textContent = text;
     btn.className = kind === 'primary' ? 'btn primary' : 'btn';
-    btn.addEventListener('click', onClick);
+    btn.addEventListener('click', async () => {
+      try { await onClick(); }
+      catch (error) {
+        console.error('[LEGAL WORKSPACE UI]', error);
+        if (typeof toast === 'function') toast(error?.message || 'Falha no módulo jurídico.');
+      }
+    });
     return btn;
   }
 
@@ -153,8 +159,16 @@
     return doc;
   }
 
+  function activeDetailTarget() {
+    const reviews = element('revisoes');
+    const documents = element('documentos');
+    if (reviews && !reviews.classList.contains('hidden')) return reviews;
+    if (documents && !documents.classList.contains('hidden')) return documents;
+    return documents || reviews;
+  }
+
   function renderDetail(doc) {
-    const target = element('revisoes') || element('documentos');
+    const target = activeDetailTarget();
     if (!target) return;
     target.innerHTML = '';
     stylePanel(target);
