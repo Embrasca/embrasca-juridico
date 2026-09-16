@@ -1,5 +1,6 @@
 const { generateDocx } = require('../lib/docx-engine');
 const { cleanGeneratedDocx } = require('../lib/docx-cleanup');
+const { applyLegalServiceContractLayoutToBuffer } = require('../lib/legal-service-layout');
 const { config, requireUser } = require('./_supabase');
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -69,7 +70,10 @@ module.exports = async function handler(req, res) {
     }
 
     const result = generateDocx(template, replacements, { templateCode });
-    const cleanBuffer = cleanGeneratedDocx(result.buffer, { templateCode });
+    let cleanBuffer = cleanGeneratedDocx(result.buffer, { templateCode });
+    if (templateCode === 'MINUTA_PRESTACAO_SERVICOS') {
+      cleanBuffer = applyLegalServiceContractLayoutToBuffer(cleanBuffer);
+    }
     if (cleanBuffer.length > 10 * 1024 * 1024) {
       throw new Error('DOCX gerado acima do limite permitido.');
     }
