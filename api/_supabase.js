@@ -68,6 +68,23 @@ async function supabaseFetch(path, { admin = false, token, method = 'GET', body 
   return { ok: response.ok, status: response.status, data };
 }
 
+async function supabaseRawFetch(path, { token, method = 'GET', body, headers = {} } = {}) {
+  const c = config();
+  if (!c.configured) {
+    const err = new Error('AUTH_NOT_CONFIGURED');
+    err.code = 'AUTH_NOT_CONFIGURED';
+    throw err;
+  }
+  const requestHeaders = { apikey: c.anon, ...headers };
+  if (token) requestHeaders.Authorization = `Bearer ${token}`;
+  const response = await fetch(`${c.url}${path}`, {
+    method,
+    headers: requestHeaders,
+    body,
+  });
+  return { ok: response.ok, status: response.status, response };
+}
+
 async function fetchOwnProfile(token, userId) {
   if (!token || !userId) return null;
   const id = encodeURIComponent(userId);
@@ -167,6 +184,7 @@ module.exports = {
   sessionCookies,
   clearCookies,
   supabaseFetch,
+  supabaseRawFetch,
   fetchOwnProfile,
   publicUser,
   validateAccessToken,
