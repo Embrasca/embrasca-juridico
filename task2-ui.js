@@ -4,8 +4,7 @@
 
   const hide = (selector) => document.querySelectorAll(selector).forEach((el) => el.classList.add('hidden'));
 
-  hide('#nav [data-s="dashboard"], #nav [data-s="documentos"], #nav [data-s="revisoes"], #nav [data-s="modelos"], #nav [data-s="config"]');
-  hide('#sendReview');
+  hide('#nav [data-s="dashboard"], #nav [data-s="modelos"], #nav [data-s="config"]');
 
   const navNew = document.querySelector('#nav [data-s="novo"]');
   if (navNew) navNew.textContent = 'Gerar documento';
@@ -63,7 +62,7 @@
   createDoc = function () {
     originalCreateDoc();
     const summary = document.getElementById('genSummary');
-    if (summary) summary.insertAdjacentHTML('beforeend', '<br><br><b>Revisao obrigatoria:</b> encaminhe o DOCX gerado ao setor juridico para conferencia antes do envio ou assinatura.');
+    if (summary) summary.insertAdjacentHTML('beforeend', '<br><br><b>Revisao obrigatoria:</b> o documento ficará disponível em Documentos para acompanhamento e envio ao Jurídico.');
   };
 
   PROFILES.forEach((profile) => {
