@@ -68,9 +68,28 @@
     downloadDocxBytes(bytes, d);
   }
 
+  async function persistAndDownload(d) {
+    const workspace = window.EmbrascaLegalWorkspace;
+    if (!workspace?.persistGeneratedDocument || !workspace?.downloadVersion) return false;
+
+    const p = prof(d.templateCode);
+    const templateBase64 = BUILTIN_TEMPLATES[d.templateCode];
+    if (!templateBase64) throw new Error('Modelo interno não encontrado.');
+
+    const document = await workspace.persistGeneratedDocument({
+      legacyDocument: d,
+      templateBase64,
+      replacements: valuesForDoc(p, d.values, d.version, d.status),
+    });
+
+    await workspace.downloadVersion(document.id, document.currentVersion);
+    return true;
+  }
+
   downloadDoc = async function(d) {
     try {
-      await generateDocxOnServer(d);
+      const centralized = await persistAndDownload(d);
+      if (!centralized) await generateDocxOnServer(d);
     } catch (error) {
       console.error('[DOCX]', error);
       toast('Falha ao gerar o DOCX: ' + (error && error.message ? error.message : 'erro desconhecido'));
