@@ -1,6 +1,4 @@
-const { generateDocx } = require('../lib/docx-engine');
-const { cleanGeneratedDocx } = require('../lib/docx-cleanup');
-const { applyLegalServiceContractLayoutToBuffer } = require('../lib/legal-service-layout');
+const { buildLegalDocx } = require('../lib/legal-docx-service');
 const { config, requireUser } = require('./_supabase');
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -69,14 +67,7 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { ok: false, error: 'Modelo DOCX interno inválido.' });
     }
 
-    const result = generateDocx(template, replacements, { templateCode });
-    let cleanBuffer = cleanGeneratedDocx(result.buffer, { templateCode });
-    if (templateCode === 'MINUTA_PRESTACAO_SERVICOS') {
-      cleanBuffer = applyLegalServiceContractLayoutToBuffer(cleanBuffer);
-    }
-    if (cleanBuffer.length > 10 * 1024 * 1024) {
-      throw new Error('DOCX gerado acima do limite permitido.');
-    }
+    const cleanBuffer = buildLegalDocx({ template, replacements, templateCode });
 
     res.statusCode = 200;
     res.setHeader('Content-Type', DOCX_MIME);
