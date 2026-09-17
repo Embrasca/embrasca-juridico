@@ -97,6 +97,12 @@ test('unauthorized navigation items are actually invisible', () => {
   assert.equal(modelos.style.display, 'none');
   assert.equal(modelos.style.priority, 'important');
 
+  applyNavigation('admin');
+  assert.equal(revisoes.style.display, '');
+  assert.equal(revisoes.style.priority, '');
+  assert.equal(modelos.style.display, '');
+  assert.equal(modelos.style.priority, '');
+
   global.document = previousDocument;
   delete require.cache[require.resolve(permissionsPath)];
 });
