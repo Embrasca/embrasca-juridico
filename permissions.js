@@ -45,6 +45,12 @@
     if (!element) return;
     element.classList.toggle('hidden', hidden);
     element.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+
+    if (hidden) {
+      element.style?.setProperty('display', 'none', 'important');
+    } else {
+      element.style?.removeProperty('display');
+    }
   }
 
   function applyNavigation(role = currentRole()) {
