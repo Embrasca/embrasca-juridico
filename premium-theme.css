@@ -62,29 +62,20 @@ body{
   color:var(--text)!important;
 }
 
-/*
-  Não aplicamos Ubuntu globalmente no body.
-  Isso evita interferência em conteúdos/documentos
-  que possam ser renderizados fora da interface principal.
-*/
 body{
   font-family:Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
 }
 
-/*
-  Ubuntu somente na interface do sistema.
-*/
+/* Interface do sistema */
+
 #app,
 #setup,
 #adminUsersOverlay{
   font-family:var(--ui-font)!important;
 }
 
-/*
-  Controles HTML nem sempre herdam a fonte automaticamente.
-*/
 #app button,
 #app input,
 #app select,
@@ -105,7 +96,7 @@ body{
   color:var(--text)!important;
 }
 
-/* Application shell */
+/* Barra lateral */
 
 aside:has(#nav){
   background:var(--sidebar)!important;
@@ -197,7 +188,7 @@ aside:has(#nav) small{
   font-weight:700!important;
 }
 
-/* Topbar */
+/* Barra superior */
 
 #app>header,
 .topbar,
@@ -214,7 +205,7 @@ aside:has(#nav) small{
   color:inherit;
 }
 
-/* Main content */
+/* Conteúdo principal */
 
 main,
 .main,
@@ -245,7 +236,35 @@ small,
   color:var(--muted)!important;
 }
 
-/* Cards and dashboard */
+/* Configurações */
+
+/*
+  Os controles antigos de usuários continuam existindo no HTML
+  porque o JavaScript legado ainda os utiliza.
+  Eles são apenas ocultados da tela Configurações.
+*/
+
+#config .users{
+  display:none!important;
+}
+
+/*
+  O texto antigo permanece no HTML para não exigir alteração
+  estrutural no app.html, mas visualmente passa a indicar apenas Backup.
+*/
+
+#config .head .sub{
+  font-size:0!important;
+}
+
+#config .head .sub::after{
+  content:"Backup do sistema.";
+  font-family:var(--ui-font)!important;
+  font-size:12px;
+  color:var(--muted)!important;
+}
+
+/* Cards e painéis */
 
 .card,
 .panel,
@@ -277,7 +296,7 @@ small,
   box-shadow:var(--shadow-md)!important;
 }
 
-/* Tables */
+/* Tabelas */
 
 .tablewrap{
   overflow:auto;
@@ -347,7 +366,7 @@ small,
   font-weight:500;
 }
 
-/* Buttons */
+/* Botões */
 
 .btn{
   min-height:38px;
@@ -408,7 +427,7 @@ small,
     )!important;
 }
 
-/* Actions */
+/* Ações */
 
 .actions{
   display:flex;
@@ -418,7 +437,7 @@ small,
   gap:8px!important;
 }
 
-/* Form fields */
+/* Formulários */
 
 .field{
   margin-bottom:16px;
@@ -517,7 +536,7 @@ label{
   color:var(--danger)!important;
 }
 
-/* Empty states */
+/* Estados vazios */
 
 .empty{
   padding:38px 24px!important;
@@ -533,7 +552,7 @@ label{
   font-family:var(--ui-font)!important;
 }
 
-/* Messages */
+/* Mensagens */
 
 .msg{
   border-radius:var(--radius-sm)!important;
@@ -550,7 +569,7 @@ label{
   color:var(--danger)!important;
 }
 
-/* Reviews */
+/* Revisões */
 
 .reviewcard{
   padding:18px!important;
@@ -568,14 +587,14 @@ label{
   margin-top:14px;
 }
 
-/* Admin interface */
+/* Administração */
 
 #adminUsersOverlay,
 #adminUsersOverlay *{
   font-family:var(--ui-font)!important;
 }
 
-/* Accessibility */
+/* Acessibilidade */
 
 :where(
   #app button,
@@ -600,7 +619,7 @@ label{
   outline-offset:2px!important;
 }
 
-/* Responsive */
+/* Responsividade */
 
 @media(max-width:900px){
 
@@ -627,7 +646,7 @@ label{
 
 }
 
-/* Reduced motion */
+/* Redução de movimento */
 
 @media(prefers-reduced-motion:reduce){
 
