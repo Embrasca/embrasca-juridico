@@ -63,6 +63,19 @@ test('app fica visualmente bloqueado ate a sessao central ser validada', () => {
   assert.match(client, /releaseAuthGate/);
 });
 
+test('role navigation is filtered before authenticated app is revealed', () => {
+  const client = read('auth-client.js');
+  const start = client.indexOf('function forceLoggedIn');
+  const end = client.indexOf('\n  async function request', start);
+  const body = client.slice(start, end > start ? end : undefined);
+  const permissionsPos = body.indexOf('EmbrascaPermissions?.applyNavigation');
+  const releasePos = body.indexOf('releaseAuthGate()');
+
+  assert.ok(permissionsPos >= 0, 'forceLoggedIn must apply role navigation');
+  assert.ok(releasePos >= 0, 'forceLoggedIn must release auth gate');
+  assert.ok(permissionsPos < releasePos, 'navigation must be filtered before the app is revealed');
+});
+
 test('document generation requires an authenticated user', () => {
   const source = read('api/generate-docx.js');
   assert.match(source, /requireUser/);
