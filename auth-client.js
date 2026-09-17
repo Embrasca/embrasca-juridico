@@ -138,6 +138,14 @@
 
   function forceLoggedIn(user) {
     setGlobalUser(user);
+
+    try {
+      window.EmbrascaPermissions?.installNavigationGuard?.();
+      window.EmbrascaPermissions?.applyNavigation?.(user?.role);
+    } catch (error) {
+      console.error('[AUTH PERMISSIONS]', error);
+    }
+
     releaseAuthGate();
     const setup = setupScreen();
     const login = loginScreen();
