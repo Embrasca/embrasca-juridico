@@ -1,35 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap');
+
 :root{
   color-scheme:light;
+
+  --ui-font:"Ubuntu","Segoe UI",Arial,sans-serif;
+
   --bg:#f3f5f2;
   --surface:#ffffff;
   --surface-subtle:#f7f9f7;
   --surface-raised:#ffffff;
   --topbar:#ffffff;
+
   --sidebar:#102019;
   --sidebar-hover:#183126;
   --sidebar-active:#1f4f38;
   --sidebar-text:#f4f8f5;
   --sidebar-muted:#aebdb4;
+
   --modal:#ffffff;
   --control:#ffffff;
+
   --text:#172019;
   --soft:#4f5e55;
   --muted:#758179;
+
   --border:#dfe5e1;
   --border-strong:#cbd5cf;
+
   --accent:#17633f;
   --accent-hover:#114d31;
   --accent-soft:#e8f3ed;
+
   --danger:#a22d2d;
   --danger-soft:#faecec;
+
   --warning:#98620d;
   --warning-soft:#fff3d4;
+
   --success:#1f7049;
   --success-soft:#e6f4ec;
+
   --overlay:rgba(5,12,8,.58);
+
   --shadow-sm:0 1px 2px rgba(16,32,25,.05);
   --shadow-md:0 10px 28px rgba(16,32,25,.08);
   --shadow-lg:0 24px 70px rgba(5,15,10,.18);
+
   --radius-sm:9px;
   --radius:13px;
   --radius-lg:18px;
@@ -46,10 +62,42 @@ body{
   color:var(--text)!important;
 }
 
+/*
+  Não aplicamos Ubuntu globalmente no body.
+  Isso evita interferência em conteúdos/documentos
+  que possam ser renderizados fora da interface principal.
+*/
 body{
-  font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif!important;
+  font-family:Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
+}
+
+/*
+  Ubuntu somente na interface do sistema.
+*/
+#app,
+#setup,
+#adminUsersOverlay{
+  font-family:var(--ui-font)!important;
+}
+
+/*
+  Controles HTML nem sempre herdam a fonte automaticamente.
+*/
+#app button,
+#app input,
+#app select,
+#app textarea,
+#setup button,
+#setup input,
+#setup select,
+#setup textarea,
+#adminUsersOverlay button,
+#adminUsersOverlay input,
+#adminUsersOverlay select,
+#adminUsersOverlay textarea{
+  font-family:var(--ui-font)!important;
 }
 
 #app{
@@ -79,6 +127,7 @@ aside:has(#nav) small{
   border:0!important;
   box-shadow:none!important;
   padding:8px!important;
+  font-family:var(--ui-font)!important;
 }
 
 #nav.premium-nav{
@@ -103,16 +152,24 @@ aside:has(#nav) small{
 #adminUsersNav{
   display:flex!important;
   align-items:center!important;
+
   width:100%!important;
   min-height:42px!important;
+
   margin:2px 0!important;
   padding:10px 12px!important;
+
   border:1px solid transparent!important;
   border-radius:10px!important;
+
   background:transparent!important;
   color:var(--sidebar-muted)!important;
-  font-weight:650!important;
+
+  font-family:var(--ui-font)!important;
+  font-weight:500!important;
+
   text-align:left!important;
+
   transition:
     background .16s ease,
     color .16s ease,
@@ -124,6 +181,7 @@ aside:has(#nav) small{
   background:var(--sidebar-hover)!important;
   color:var(--sidebar-text)!important;
   border-color:rgba(255,255,255,.06)!important;
+
   transform:none!important;
   box-shadow:none!important;
 }
@@ -132,10 +190,14 @@ aside:has(#nav) small{
 #nav [data-s][aria-current="page"],
 #adminUsersNav.active{
   background:var(--sidebar-active)!important;
-  color:#fff!important;
+  color:#ffffff!important;
   border-color:rgba(102,198,143,.24)!important;
   box-shadow:inset 3px 0 0 var(--accent)!important;
+
+  font-weight:700!important;
 }
+
+/* Topbar */
 
 #app>header,
 .topbar,
@@ -144,6 +206,7 @@ aside:has(#nav) small{
   color:var(--text)!important;
   border-bottom:1px solid var(--border)!important;
   box-shadow:var(--shadow-sm)!important;
+  font-family:var(--ui-font)!important;
 }
 
 #app>header *,
@@ -151,10 +214,13 @@ aside:has(#nav) small{
   color:inherit;
 }
 
+/* Main content */
+
 main,
 .main,
 .content{
   color:var(--text);
+  font-family:var(--ui-font)!important;
 }
 
 h1,
@@ -164,10 +230,11 @@ h4,
 .title{
   color:var(--text)!important;
   letter-spacing:-.025em;
+  font-family:var(--ui-font)!important;
 }
 
 h1{
-  font-weight:760!important;
+  font-weight:700!important;
 }
 
 .sub,
@@ -189,9 +256,13 @@ small,
 #newUserPanel{
   background:var(--surface)!important;
   color:var(--text)!important;
+
   border:1px solid var(--border)!important;
   border-radius:var(--radius)!important;
+
   box-shadow:var(--shadow-sm)!important;
+
+  font-family:var(--ui-font)!important;
 }
 
 .metric{
@@ -210,39 +281,55 @@ small,
 
 .tablewrap{
   overflow:auto;
+
   background:var(--surface)!important;
+
   border:1px solid var(--border)!important;
   border-radius:var(--radius-lg)!important;
+
   box-shadow:var(--shadow-sm)!important;
 }
 
 .table{
   width:100%;
+
   border-collapse:separate!important;
   border-spacing:0!important;
+
   background:transparent!important;
   color:var(--text)!important;
+
+  font-family:var(--ui-font)!important;
 }
 
 .table thead th{
   position:sticky;
   top:0;
   z-index:2;
+
   padding:13px 15px!important;
+
   background:var(--surface-subtle)!important;
   color:var(--muted)!important;
+
   border-bottom:1px solid var(--border)!important;
+
   font-size:11px!important;
-  font-weight:750!important;
+  font-weight:700!important;
+
   letter-spacing:.055em;
   text-transform:uppercase;
+
   white-space:nowrap;
 }
 
 .table tbody td{
   padding:14px 15px!important;
+
   border-bottom:1px solid var(--border)!important;
+
   color:var(--soft)!important;
+
   vertical-align:middle!important;
 }
 
@@ -257,20 +344,27 @@ small,
 .table tbody td:first-child,
 .table tbody td:nth-child(2){
   color:var(--text)!important;
-  font-weight:650;
+  font-weight:500;
 }
 
-/* Controls */
+/* Buttons */
 
 .btn{
   min-height:38px;
+
   padding:8px 13px!important;
+
   border:1px solid var(--border-strong)!important;
   border-radius:var(--radius-sm)!important;
+
   background:var(--surface)!important;
   color:var(--soft)!important;
-  font-weight:680!important;
+
+  font-family:var(--ui-font)!important;
+  font-weight:500!important;
+
   cursor:pointer;
+
   transition:
     background .16s ease,
     border-color .16s ease,
@@ -280,8 +374,10 @@ small,
 
 .btn:hover:not(:disabled){
   border-color:var(--accent)!important;
+
   color:var(--text)!important;
   background:var(--surface-raised)!important;
+
   transform:none!important;
   box-shadow:var(--shadow-sm)!important;
 }
@@ -289,31 +385,40 @@ small,
 .btn.primary{
   background:var(--accent)!important;
   border-color:var(--accent)!important;
-  color:#fff!important;
+  color:#ffffff!important;
+
+  font-weight:700!important;
 }
 
 .btn.primary:hover:not(:disabled){
   background:var(--accent-hover)!important;
   border-color:var(--accent-hover)!important;
-  color:#fff!important;
+  color:#ffffff!important;
 }
 
 .btn.danger{
   background:var(--danger-soft)!important;
   color:var(--danger)!important;
-  border-color:color-mix(
-    in srgb,
-    var(--danger) 28%,
-    var(--border)
-  )!important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--danger) 28%,
+      var(--border)
+    )!important;
 }
+
+/* Actions */
 
 .actions{
   display:flex;
-  gap:8px!important;
   align-items:center;
   flex-wrap:wrap;
+
+  gap:8px!important;
 }
+
+/* Form fields */
 
 .field{
   margin-bottom:16px;
@@ -322,39 +427,59 @@ small,
 .field label,
 label{
   color:var(--soft)!important;
+
+  font-family:var(--ui-font)!important;
   font-size:12px;
-  font-weight:700;
+  font-weight:500;
 }
 
-input,
-select,
-textarea{
+#app input,
+#app select,
+#app textarea,
+#setup input,
+#setup select,
+#setup textarea{
   background:var(--control)!important;
   color:var(--text)!important;
+
   border:1px solid var(--border-strong)!important;
   border-radius:var(--radius-sm)!important;
+
   outline:none!important;
+
   transition:
     border-color .16s ease,
     box-shadow .16s ease!important;
 }
 
-input,
-select{
+#app input,
+#app select,
+#setup input,
+#setup select{
   min-height:42px;
 }
 
-textarea{
+#app textarea,
+#setup textarea{
   min-height:105px;
   resize:vertical;
 }
 
-input:focus,
-select:focus,
-textarea:focus{
+#app input:focus,
+#app select:focus,
+#app textarea:focus,
+#setup input:focus,
+#setup select:focus,
+#setup textarea:focus{
   border-color:var(--accent)!important;
-  box-shadow:0 0 0 3px
-    color-mix(in srgb,var(--accent) 16%,transparent)!important;
+
+  box-shadow:
+    0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--accent) 16%,
+      transparent
+    )!important;
 }
 
 /* Status */
@@ -362,13 +487,19 @@ textarea:focus{
 .badge{
   display:inline-flex!important;
   align-items:center;
+
   min-height:25px;
+
   padding:4px 9px!important;
+
   border-radius:999px!important;
+
   background:var(--success-soft)!important;
   color:var(--success)!important;
+
+  font-family:var(--ui-font)!important;
   font-size:11px!important;
-  font-weight:750!important;
+  font-weight:700!important;
 }
 
 .badge.gray{
@@ -386,26 +517,40 @@ textarea:focus{
   color:var(--danger)!important;
 }
 
+/* Empty states */
+
 .empty{
   padding:38px 24px!important;
+
   border:1px dashed var(--border-strong)!important;
   border-radius:var(--radius)!important;
+
   background:var(--surface-subtle)!important;
   color:var(--muted)!important;
+
   text-align:center;
+
+  font-family:var(--ui-font)!important;
 }
+
+/* Messages */
 
 .msg{
   border-radius:var(--radius-sm)!important;
   border:1px solid var(--border)!important;
+
   background:var(--surface-subtle)!important;
   color:var(--soft)!important;
+
+  font-family:var(--ui-font)!important;
 }
 
 .msg.err{
   background:var(--danger-soft)!important;
   color:var(--danger)!important;
 }
+
+/* Reviews */
 
 .reviewcard{
   padding:18px!important;
@@ -414,6 +559,8 @@ textarea:focus{
 
 .reviewcard>b{
   color:var(--text)!important;
+
+  font-family:var(--ui-font)!important;
   font-size:14px;
 }
 
@@ -421,27 +568,51 @@ textarea:focus{
   margin-top:14px;
 }
 
+/* Admin interface */
+
+#adminUsersOverlay,
+#adminUsersOverlay *{
+  font-family:var(--ui-font)!important;
+}
+
+/* Accessibility */
+
 :where(
-  button,
-  input,
-  select,
-  textarea,
-  a,
-  [tabindex]
+  #app button,
+  #app input,
+  #app select,
+  #app textarea,
+  #app a,
+  #app [tabindex],
+  #setup button,
+  #setup input,
+  #setup select,
+  #setup textarea
 ):focus-visible{
-  outline:3px solid
-    color-mix(in srgb,var(--accent) 34%,transparent)!important;
+  outline:
+    3px solid
+    color-mix(
+      in srgb,
+      var(--accent) 34%,
+      transparent
+    )!important;
+
   outline-offset:2px!important;
 }
 
+/* Responsive */
+
 @media(max-width:900px){
+
   .table thead th,
   .table tbody td{
     padding:11px 12px!important;
   }
+
 }
 
 @media(max-width:640px){
+
   .tablewrap{
     border-radius:12px!important;
   }
@@ -453,9 +624,13 @@ textarea:focus{
   .reviewcard{
     padding:14px!important;
   }
+
 }
 
+/* Reduced motion */
+
 @media(prefers-reduced-motion:reduce){
+
   *,
   *::before,
   *::after{
@@ -464,4 +639,5 @@ textarea:focus{
     animation-duration:.001ms!important;
     animation-iteration-count:1!important;
   }
+
 }
