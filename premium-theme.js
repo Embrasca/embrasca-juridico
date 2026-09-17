@@ -27,7 +27,7 @@
     const label = button.querySelector('.theme-label');
     const next = theme === 'dark' ? 'light' : 'dark';
     if (icon) icon.textContent = theme === 'dark' ? '☾' : '☀';
-    if (label) label.textContent = theme === 'dark' ? 'Escuro' : 'Claro';
+    if (label) label.textContent = theme === 'dark' ? 'Tema escuro' : 'Tema claro';
     button.setAttribute('aria-label', `Ativar tema ${next === 'dark' ? 'escuro' : 'claro'}`);
     button.setAttribute('title', `Ativar tema ${next === 'dark' ? 'escuro' : 'claro'}`);
     button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
@@ -44,6 +44,10 @@
 
   function createToggle() {
     if (document.getElementById('embrasca-theme-toggle')) return;
+
+    const shell = document.createElement('div');
+    shell.className = 'premium-sidebar-shell';
+
     const button = document.createElement('button');
     button.id = 'embrasca-theme-toggle';
     button.type = 'button';
@@ -51,7 +55,15 @@
     button.addEventListener('click', () => {
       applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark', true);
     });
-    document.body.appendChild(button);
+
+    shell.appendChild(button);
+    const nav = document.getElementById('nav');
+    if (nav) {
+      nav.appendChild(shell);
+    } else {
+      shell.classList.add('is-floating');
+      document.body.appendChild(shell);
+    }
     updateToggle(root.dataset.theme || preferredTheme());
   }
 
