@@ -6,6 +6,41 @@ const path = require('node:path');
 const permissionsPath = path.join(__dirname, 'permissions.js');
 const indexPath = path.join(__dirname, 'index.html');
 
+function fakeNavItem(screen) {
+  const classes = new Set();
+  const style = {
+    display: '',
+    priority: '',
+    setProperty(name, value, priority) {
+      if (name === 'display') {
+        this.display = value;
+        this.priority = priority || '';
+      }
+    },
+    removeProperty(name) {
+      if (name === 'display') {
+        this.display = '';
+        this.priority = '';
+      }
+    },
+  };
+
+  return {
+    dataset: { s: screen },
+    classList: {
+      toggle(name, enabled) {
+        if (enabled) classes.add(name);
+        else classes.delete(name);
+      },
+      contains(name) {
+        return classes.has(name);
+      },
+    },
+    setAttribute() {},
+    style,
+  };
+}
+
 test('permission matrix matches the three approved profiles', () => {
   const { canAccess } = require(permissionsPath);
 
@@ -33,6 +68,37 @@ test('unauthorized navigation falls back to dashboard', () => {
   assert.equal(resolveTarget('juridico', 'novo'), 'dashboard');
   assert.equal(resolveTarget('usuario', 'revisoes'), 'dashboard');
   assert.equal(resolveTarget('admin', 'config'), 'config');
+});
+
+test('unauthorized navigation items are actually invisible', () => {
+  const dashboard = fakeNavItem('dashboard');
+  const revisoes = fakeNavItem('revisoes');
+  const modelos = fakeNavItem('modelos');
+
+  const previousDocument = global.document;
+  global.document = {
+    querySelectorAll(selector) {
+      if (selector === '#nav [data-s]') return [dashboard, revisoes, modelos];
+      if (selector === '[data-go]') return [];
+      return [];
+    },
+    getElementById() {
+      return null;
+    },
+  };
+
+  delete require.cache[require.resolve(permissionsPath)];
+  const { applyNavigation } = require(permissionsPath);
+  applyNavigation('usuario');
+
+  assert.equal(dashboard.style.display, '');
+  assert.equal(revisoes.style.display, 'none');
+  assert.equal(revisoes.style.priority, 'important');
+  assert.equal(modelos.style.display, 'none');
+  assert.equal(modelos.style.priority, 'important');
+
+  global.document = previousDocument;
+  delete require.cache[require.resolve(permissionsPath)];
 });
 
 test('permissions layer loads before central authentication', () => {
