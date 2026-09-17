@@ -16,6 +16,17 @@ test('theme toggle never competes with the application header', () => {
   assert.doesNotMatch(themeJs, /MutationObserver/);
 });
 
+test('sidebar navigation owns a stable vertical layout', () => {
+  assert.match(themeJs, /nav\.classList\.add\(['"]premium-nav['"]\)/);
+  assert.match(css, /#nav\.premium-nav\{[^}]*display:flex[^}]*flex-direction:column[^}]*align-items:stretch/s);
+});
+
+test('theme control remains in normal flow without overflowing the sidebar', () => {
+  assert.match(css, /#nav\.premium-nav\s*>\s*\.premium-sidebar-shell\{[^}]*flex:0 0 auto[^}]*align-self:stretch[^}]*width:auto/s);
+  const shellRule = css.match(/\.premium-sidebar-shell\{[^}]+\}/)?.[0] || '';
+  assert.doesNotMatch(shellRule, /position:(?:absolute|fixed)/);
+});
+
 test('light and dark themes use one complete surface token system', () => {
   assert.match(css, /--sidebar:/);
   assert.match(css, /--topbar:/);
@@ -38,7 +49,7 @@ test('admin actions are laid out predictably and never overlap', () => {
   assert.match(adminJs, /@media\(max-width:760px\)/);
 });
 
-test('premium assets are cache-busted to the professional revision', () => {
-  assert.match(index, /premium-theme\.css\?v=20260916-professional/);
-  assert.match(index, /premium-theme\.js\?v=20260916-professional/);
+test('premium assets are cache-busted to the navigation fix revision', () => {
+  assert.match(index, /premium-theme\.css\?v=20260917-navfix/);
+  assert.match(index, /premium-theme\.js\?v=20260917-navfix/);
 });

@@ -78,6 +78,10 @@ body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif!important;-webkit-font
 aside:has(#nav){background:var(--sidebar)!important;color:var(--sidebar-text)!important;border-right:1px solid rgba(255,255,255,.07)!important;box-shadow:8px 0 28px rgba(4,14,8,.08)!important}
 aside:has(#nav) a,aside:has(#nav) span,aside:has(#nav) p,aside:has(#nav) small{color:inherit}
 #nav{background:transparent!important;color:var(--sidebar-text)!important;border:0!important;box-shadow:none!important;padding:8px!important}
+#nav.premium-nav{display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%!important;min-width:0!important}
+#nav.premium-nav>*{min-width:0}
+#nav.premium-nav>[data-s],#nav.premium-nav>#adminUsersNav{flex:0 0 auto!important;width:100%!important}
+#nav.premium-nav>.premium-sidebar-shell{flex:0 0 auto!important;align-self:stretch!important;width:auto!important;order:100}
 #nav [data-s],#adminUsersNav{display:flex!important;align-items:center!important;width:100%!important;min-height:42px!important;margin:2px 0!important;padding:10px 12px!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;color:var(--sidebar-muted)!important;font-weight:650!important;text-align:left!important;transition:background .16s ease,color .16s ease,border-color .16s ease!important}
 #nav [data-s]:hover,#adminUsersNav:hover{background:var(--sidebar-hover)!important;color:var(--sidebar-text)!important;border-color:rgba(255,255,255,.06)!important;transform:none!important;box-shadow:none!important}
 #nav [data-s].active,#nav [data-s][aria-current="page"],#adminUsersNav.active{background:var(--sidebar-active)!important;color:#fff!important;border-color:rgba(102,198,143,.24)!important;box-shadow:inset 3px 0 0 var(--accent)!important}

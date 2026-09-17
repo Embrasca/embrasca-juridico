@@ -16,7 +16,7 @@
     if (!html.includes(marker)) throw new Error('Estrutura da aplicação inválida.');
 
     const authGate = '<style id="central-auth-gate">#app,#setup{display:none!important}</style>';
-    const premiumTheme = '<link rel="stylesheet" href="/premium-theme.css?v=20260916-professional">';
+    const premiumTheme = '<link rel="stylesheet" href="/premium-theme.css?v=20260917-navfix">';
     html = html.replace('</head>', authGate + premiumTheme + '</head>');
 
     const scripts = [
@@ -30,7 +30,7 @@
       '<script src="/admin-users-ui.js?v=20260916-professional"><\/script>',
       '<script src="/document-title-ui.js?v=20260907-title"><\/script>',
       '<script src="/browser-history-ui.js?v=20260907-history-guard"><\/script>',
-      '<script src="/premium-theme.js?v=20260916-professional"><\/script>'
+      '<script src="/premium-theme.js?v=20260917-navfix"><\/script>'
     ].join('');
     html = html.replace(marker, scripts + marker);
     document.open();

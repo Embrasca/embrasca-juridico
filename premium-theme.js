@@ -59,6 +59,7 @@
     shell.appendChild(button);
     const nav = document.getElementById('nav');
     if (nav) {
+      nav.classList.add('premium-nav');
       nav.appendChild(shell);
     } else {
       shell.classList.add('is-floating');
