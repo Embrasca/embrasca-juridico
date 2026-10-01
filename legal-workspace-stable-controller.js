@@ -10,6 +10,28 @@
     return !wanted || String(doc?.statusLabel || '') === wanted;
   }
 
+  function updateReviewBadge(doc, count, allowed) {
+    const nav = doc.querySelector('#nav [data-s="revisoes"]');
+    if (!nav) return;
+    let badge = doc.getElementById('review-pending-count');
+    if (!allowed || !count) {
+      if (badge) badge.remove();
+      nav.removeAttribute('aria-label');
+      return;
+    }
+    if (!badge) {
+      badge = doc.createElement('span');
+      badge.id = 'review-pending-count';
+      badge.className = 'review-pending-count';
+      badge.setAttribute('aria-hidden', 'true');
+      nav.appendChild(badge);
+    }
+    badge.textContent = String(count);
+    const label = `${count} ${count === 1 ? 'documento aguardando revisão' : 'documentos aguardando revisão'}`;
+    badge.title = label;
+    nav.setAttribute('aria-label', `Revisões — ${label}`);
+  }
+
   function install(win) {
     if (win.__EMBRASCA_STABLE_LEGAL_WORKSPACE__) return;
     win.__EMBRASCA_STABLE_LEGAL_WORKSPACE__ = true;
@@ -243,6 +265,8 @@
     }
 
     function renderReviews() {
+      const queue = mergedDocuments.filter((view) => view.statusLabel === 'Em revisão');
+      updateReviewBadge(win.document, queue.length, canReview());
       const container = win.document.getElementById('revList');
       if (!container) return;
       container.replaceChildren();
@@ -255,7 +279,6 @@
         return;
       }
 
-      const queue = mergedDocuments.filter((view) => view.statusLabel === 'Em revisão');
       if (!queue.length) {
         const empty = win.document.createElement('div');
         empty.className = 'empty';
@@ -303,14 +326,22 @@
       });
     }
 
-    async function refresh() {
-      if (refreshPromise) return refreshPromise;
+    async function refresh({ background = false } = {}) {
+      if (refreshPromise) {
+        const documents = await refreshPromise;
+        if (!background) { renderDocuments(); renderReviews(); }
+        return documents;
+      }
       refreshPromise = (async () => {
         const data = await request('/api/legal-workspace');
         centralDocuments = Array.isArray(data?.documents) ? data.documents : [];
         mergedDocuments = helper.mergeDocuments(legacyState().documents, centralDocuments);
-        renderDocuments();
-        renderReviews();
+        if (background) {
+          updateReviewBadge(win.document, mergedDocuments.filter(view => view.statusLabel === 'Em revisão').length, canReview());
+        } else {
+          renderDocuments();
+          renderReviews();
+        }
         return mergedDocuments;
       })();
       try { return await refreshPromise; }
@@ -433,6 +464,18 @@
       workflow,
     };
 
+    // Refresh the notification without rebuilding forms or erasing review comments.
+    function refreshNotification() {
+      if (!canReview()) { updateReviewBadge(win.document, 0, false); return; }
+      if (win.document.visibilityState === 'hidden') return;
+      refresh({ background: true }).catch(error => console.error('[LEGAL REVIEW COUNT]', error));
+    }
+    win.setInterval(refreshNotification, 60000);
+    win.addEventListener('focus', refreshNotification);
+    win.document.addEventListener('visibilitychange', () => {
+      if (win.document.visibilityState === 'visible') refreshNotification();
+    });
+
     refresh()
       .then(reconcileOnce)
       .then(refresh)
@@ -442,6 +485,7 @@
   return {
     install,
     matchesStatus,
+    updateReviewBadge,
     usesMutationObserver: false,
   };
 });
