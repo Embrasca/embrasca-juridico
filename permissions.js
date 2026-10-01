@@ -7,14 +7,14 @@
 })(typeof window !== 'undefined' ? window : globalThis, function (root) {
   const ACCESS = Object.freeze({
     usuario: Object.freeze(['dashboard', 'novo', 'documentos']),
-    juridico: Object.freeze(['dashboard', 'documentos', 'revisoes']),
+    juridico: Object.freeze(['dashboard', 'novo', 'documentos', 'revisoes']),
     admin: Object.freeze(['dashboard', 'novo', 'documentos', 'revisoes', 'modelos', 'config']),
   });
 
   function normalizeRole(role) {
     const value = String(role || '').trim().toLowerCase();
     if (value === 'jurídico') return 'juridico';
-    if (value === 'administrador') return 'admin';
+    if (value === 'administrador' || value === 'administrativo') return 'admin';
     if (value === 'usuário') return 'usuario';
     return value;
   }

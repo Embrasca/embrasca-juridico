@@ -52,7 +52,7 @@ test('permission matrix matches the three approved profiles', () => {
   assert.equal(canAccess('usuario', 'config'), false);
 
   assert.equal(canAccess('juridico', 'dashboard'), true);
-  assert.equal(canAccess('juridico', 'novo'), false);
+  assert.equal(canAccess('juridico', 'novo'), true);
   assert.equal(canAccess('juridico', 'documentos'), true);
   assert.equal(canAccess('juridico', 'revisoes'), true);
   assert.equal(canAccess('juridico', 'modelos'), false);
@@ -60,25 +60,27 @@ test('permission matrix matches the three approved profiles', () => {
 
   for (const screen of ['dashboard', 'novo', 'documentos', 'revisoes', 'modelos', 'config']) {
     assert.equal(canAccess('admin', screen), true);
+    assert.equal(canAccess('administrativo', screen), true);
   }
 });
 
 test('unauthorized navigation falls back to dashboard', () => {
   const { resolveTarget } = require(permissionsPath);
-  assert.equal(resolveTarget('juridico', 'novo'), 'dashboard');
+  assert.equal(resolveTarget('juridico', 'novo'), 'novo');
   assert.equal(resolveTarget('usuario', 'revisoes'), 'dashboard');
   assert.equal(resolveTarget('admin', 'config'), 'config');
 });
 
 test('unauthorized navigation items are actually invisible', () => {
   const dashboard = fakeNavItem('dashboard');
+  const novo = fakeNavItem('novo');
   const revisoes = fakeNavItem('revisoes');
   const modelos = fakeNavItem('modelos');
 
   const previousDocument = global.document;
   global.document = {
     querySelectorAll(selector) {
-      if (selector === '#nav [data-s]') return [dashboard, revisoes, modelos];
+      if (selector === '#nav [data-s]') return [dashboard, novo, revisoes, modelos];
       if (selector === '[data-go]') return [];
       return [];
     },
@@ -96,6 +98,11 @@ test('unauthorized navigation items are actually invisible', () => {
   assert.equal(revisoes.style.priority, 'important');
   assert.equal(modelos.style.display, 'none');
   assert.equal(modelos.style.priority, 'important');
+
+  applyNavigation('juridico');
+  assert.equal(novo.style.display, '');
+  assert.equal(revisoes.style.display, '');
+  assert.equal(modelos.style.display, 'none');
 
   applyNavigation('admin');
   assert.equal(revisoes.style.display, '');
